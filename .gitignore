@@ -1,0 +1,6 @@
+# Ignore logs and images directory
+logs/
+images/
+
+# Ignore .asv files
+*.asv
