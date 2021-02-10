@@ -58,7 +58,7 @@
 		</Pair>
 	</StyleMap>
 	<Placemark id="070B5D0BCC18C370A3FC">
-		<name>line1</name>
+		<name>left</name>
 		<LookAt>
 			<longitude>-96.28241803543752</longitude>
 			<latitude>35.81349194180702</latitude>
@@ -77,7 +77,7 @@
 		</LineString>
 	</Placemark>
 	<Placemark id="034F4AB96318C3704282">
-		<name>line2</name>
+		<name>right</name>
 		<LookAt>
 			<longitude>-97.41446180866068</longitude>
 			<latitude>36.16278003669024</latitude>

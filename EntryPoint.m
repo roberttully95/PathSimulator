@@ -3,6 +3,10 @@ addpath(genpath("src"))
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-kmlData = readKml('C:\Dev\MATLAB\triangulation-simulator\data\kmlTest1.kml');
+% Specify file location
+kmlFile = 'kmlTest1.kml';
+
+% Initialize simulator.
+sim = Simulator(kmlFile);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
