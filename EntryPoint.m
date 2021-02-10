@@ -7,6 +7,6 @@ addpath(genpath("src"))
 kmlFile = 'kmlTest1.kml';
 
 % Initialize simulator.
-sim = Simulator(kmlFile);
+sim = SimulatorExample(kmlFile);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

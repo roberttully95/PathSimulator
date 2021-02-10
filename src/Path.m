@@ -1,6 +1,5 @@
 classdef Path < handle
-    %PATH Summary of this class goes here
-    %   Detailed explanation goes here
+    %PATH Path class.
     
     properties
         x
@@ -20,9 +19,8 @@ classdef Path < handle
         end
         
         function plot(this, ax, color)
-            %METHOD1 Summary of this method goes here
-            %   Detailed explanation goes here
-            plot(ax, this.x, this.y, color);
+            %PLOT Plots the path on an axis,
+            plot(ax, this.x, this.y, color, 'LineWidth', 1.5);
         end
 
     end
