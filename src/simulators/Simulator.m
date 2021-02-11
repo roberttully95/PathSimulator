@@ -2,13 +2,17 @@ classdef (Abstract) Simulator < handle
     %SIMULATOR Simulator base class. All of the code that is common between different algorithms
     %should be written here. This includes plotting the paths, reading data from input files, etc.
     
-    properties (Access = protected)
-        file % kml file
+    properties
+        file % Complete path to the .json file.
         
-        path1 % path 1
-        path2 % path 2
+        triangles % THe array of triangles that form the map.
         
-        triangles % set of triangles
+        simData % Simulation-level parameters / information
+    end
+    
+    properties (Dependent)
+        path1 % The first bounding path.
+        path2 % The second bounding path. 
     end
     
     methods (Abstract)
@@ -26,11 +30,9 @@ classdef (Abstract) Simulator < handle
             % Set file
             this.file = strcat(cd, '\data\', file);
             
-            % Read kml
-            data = readKml(this.file);
-            this.path1 = Path(data(1).Lon, data(1).Lat);
-            this.path2 = Path(data(2).Lon, data(2).Lat);
-            
+            % Read simulation data from input file.
+            this.simData = readJson(this.file);
+
             % Plot region
             this.initPlot(gca);
         end
@@ -79,6 +81,17 @@ classdef (Abstract) Simulator < handle
                 
                 arrows(ax, v(1), v(2), len, 90 - atan2(this.triangles(i).Dir(2), this.triangles(i).Dir(1)) * (180 / pi))
             end
+        end
+       
+    end
+    
+    methods 
+        function val = get.path1(this)
+            val = this.simData.paths(1);
+        end
+        
+        function val = get.path2(this)
+            val = this.simData.paths(2);
         end
     end
 end

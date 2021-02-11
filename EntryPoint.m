@@ -4,9 +4,9 @@ addpath(genpath("src"))
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Specify file location
-kmlFile = 'kmlTest1.kml';
+jsonFile = 'jsonTest1.json';
 
 % Initialize simulator.
-sim = SimulatorExample(kmlFile);
+sim = SimulatorExample(jsonFile);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
