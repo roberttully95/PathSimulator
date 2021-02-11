@@ -28,13 +28,13 @@ function triangles = closestTriangulation(p1, p2)
         % If one path is finished, we need to do the other.
         if i == m
             triangles(index) = Triangle(v2a, v1a, v2b, 'Vertices');
-            triangles(index).Prev = index - 1;
+            triangles(index).prevIndex = index - 1;
             j = j + 1;
             index = index + 1;
             continue;
         elseif j == n
             triangles(index) = Triangle(v1a, v2a, v1b, 'Vertices');
-            triangles(index).Prev = index - 1;
+            triangles(index).prevIndex = index - 1;
             i = i + 1;
             index = index + 1;
             continue;
@@ -43,15 +43,15 @@ function triangles = closestTriangulation(p1, p2)
         % Create edge
         if d1 <= d2
             triangles(index) = Triangle(v2a, v1a, v2b, 'Vertices');
-            triangles(index).Prev = index - 1;
-            triangles(index).Next = index + 1;
+            triangles(index).prevIndex = index - 1;
+            triangles(index).nextIndex = index + 1;
             j = j + 1;
             index = index + 1;
             continue;
         else
             triangles(index) = Triangle(v1a, v2a, v1b, 'Vertices');
-            triangles(index).Prev = index - 1;
-            triangles(index).Next = index + 1;
+            triangles(index).prevIndex = index - 1;
+            triangles(index).nextIndex = index + 1;
             i = i + 1;
             index = index + 1;
             continue;

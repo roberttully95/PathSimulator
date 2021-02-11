@@ -2,35 +2,38 @@ classdef Triangle < handle
     %TRIANGLE Triangle object.
     
     properties
-        V1
-        V2
-        V3
-        Entry
-        Exit
-        DirE
-        Dir
-        Prev
-        Next
+        V1              % Location of vertex 1 [x, y]
+        V2              % Location of vertex 2 [x, y]
+        V3              % Location of vertex 3 [x, y]
+        entryEdge       % The entry edge [V1; V2]
+        exitEdge        % The exit edge [V2; V3]
+        directionEdge   % The direction edge [V1; V3]
+        prevIndex       % The index of the previous triangle in the triangles array
+        nextIndex       % The index of the next triangle in the triangles array
     end
     
     properties (Dependent)
-        xVals
-        yVals
-        centroid
+        x           % The x coordinates of the vertices
+        y           % The y coordinates of the vertices 
+        centroid    % The centroid of the triangle
+        dir         % The normalized direction vector for the triangle
+        entryLength % Length of the entry edge
+        exitLength  % Length of the exit edge
+        dirLength   % Length of the direction edge
     end
     
     methods
         function this = Triangle(A, B, C, type)
-            %TRIANGLE Construct an instance of this class
-            %   Detailed explanation goes here
+            %TRIANGLE Construct a triangle instance. Triangle can be constructed by either passing
+            %the vertices with the tag 'Vertices' or by passing the edges with the tag 'Edges'
             
             % If the user entered the edges.
             if strcmp(type, 'Edges')
                 
                 % Set edges
-                this.Entry = A;
-                this.Exit = B;
-                this.DirE = C;
+                this.entryEdge = A;
+                this.exitEdge = B;
+                this.directionEdge = C;
 
                 % Set Vertices
                 this.V1 = A(1, :);
@@ -45,14 +48,10 @@ classdef Triangle < handle
                 this.V3 = C;
                 
                 % Set Edges
-                this.Entry = [A; B];
-                this.Exit = [B; C];
-                this.DirE = [A; C];   
+                this.entryEdge = [A; B];
+                this.exitEdge = [B; C];
+                this.directionEdge = [A; C];   
             end
-           
-            % Set Direction
-            dirAbs = this.DirE(2, :) - this.DirE(1, :); 
-            this.Dir = dirAbs / norm(dirAbs);
             
             % Check Colinear
             pointsAreCollinear = @(xy) rank(xy(2:end,:) - xy(1,:)) == 1;
@@ -61,8 +60,8 @@ classdef Triangle < handle
             end
                
             % Init indexes
-            this.Prev = 0;
-            this.Next = NaN;
+            this.prevIndex = 0;
+            this.nextIndex = NaN;
         end
         
         function plot(this, ax, color)
@@ -74,7 +73,7 @@ classdef Triangle < handle
             hold(ax, 'on');
                
             % Patch shape
-            patch(this.xVals, this.yVals, color, 'FaceAlpha', 0.2);
+            patch(this.x, this.y, color, 'FaceAlpha', 0.2);
             
             % Plot entry edge
             line([this.V1(1), this.V2(1)], [this.V1(2), this.V2(2)],...
@@ -107,16 +106,33 @@ classdef Triangle < handle
             val = ~(has_neg && has_pos);
         end
 
-        function xVals = get.xVals(this)
+        function xVals = get.x(this)
             xVals = [this.V1(1), this.V2(1), this.V3(1)];
         end
         
-        function yVals = get.yVals(this)
+        function yVals = get.y(this)
             yVals = [this.V1(2), this.V2(2), this.V3(2)];
         end
         
         function val = get.centroid(this)
             val = mean([this.V1; this.V2; this.V3], 1);
+        end
+        
+        function val = get.entryLength(this)
+            val = norm(this.entryEdge(1,:) - this.entryEdge(2,:));
+        end
+        
+        function val = get.exitLength(this)
+            val = norm(this.exitEdge(1,:) - this.exitEdge(2,:));
+        end
+        
+        function val = get.dirLength(this)
+            val = norm(this.directionEdge(1,:) - this.directionEdge(2,:));
+        end
+        
+        function val = get.dir(this)
+            dirAbs = this.directionEdge(2, :) - this.directionEdge(1, :); 
+            val = dirAbs / norm(dirAbs);
         end
     end
 end

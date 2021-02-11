@@ -8,9 +8,6 @@ classdef (Abstract) Simulator < handle
         simData     % Simulation-level parameters / information
         vehicles    % Array of vehicles.
         dT          % The time difference between consecutive timesteps.
-    end
-    
-    properties (Access = protected)
         finished    % Flag that contains the completion state of the simulation.
         t           % Holds the current time of the simulation
         hasAxis     % Determines if there has been a valid axis argument passed to the simulator.
@@ -148,10 +145,10 @@ classdef (Abstract) Simulator < handle
                     v = tri.centroid;
 
                     % Get length 
-                    len = (1/6) * norm(tri.DirE(1, :) - tri.DirE(2, :));
+                    len = (1/6) * tri.dirLength;
 
                     % Plot arrows
-                    arrows(this.axis, v(1), v(2), len, 90 - atan2(this.triangles(i).Dir(2), this.triangles(i).Dir(1)) * (180 / pi))
+                    arrows(this.axis, v(1), v(2), len, 90 - atan2(tri.dir(2), tri.dir(1)) * (180 / pi))
                 end
             end
         end
@@ -181,7 +178,7 @@ classdef (Abstract) Simulator < handle
         end
         
         function val = get.tEnd(this)
-            val = this.simData.properties.duration;
+            val = (this.nVehicles - 1)/this.fSpawn;
         end
         
         function val = get.seed(this)
@@ -201,7 +198,7 @@ classdef (Abstract) Simulator < handle
         end
         
         function val = get.nVehicles(this)
-            val = size(this.vehicles, 2);
+            val = this.simData.properties.nVehicles;
         end
         
         function val = get.nTriangles(this)

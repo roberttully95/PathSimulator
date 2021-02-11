@@ -2,23 +2,22 @@ classdef Vehicle < handle
     %VEHICLE Vehicle class.
     
     properties
-        x
-        y
-        th
-        v
-        tInit
-        tEnd
-        handle
-        finished
-        triangleIndex
+        x               % x coordinate of the vehicle
+        y               % y coordinate of the vehicle
+        th              % heading of the vehicle (-pi -> pi)
+        v               % Current velocity of the vehicle.
+        tInit           % The time at which the vehicle enters the 'map'
+        tEnd            % The time at which the vehicle exits the 'map'
+        finished        % Flag that determines if the vehicle has exited the 'map'.
+        triangleIndex   % The index of the triangle within the triangles array that the vehicle is currently in.
     end
     
     properties (Dependent)
-        pos
-        pose
-        vx
-        vy
-        lifeSpan
+        pos         % The current position of the vehicle. [x, y]
+        pose        % The current pose of the vehicle. [x, y, th]
+        vx          % The x component of the velocity vector.
+        vy          % The y component of the velocity vector.
+        lifeSpan    % The length of time the vehicle was present in the map.
     end
     
     methods

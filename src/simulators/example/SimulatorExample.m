@@ -15,7 +15,7 @@ classdef SimulatorExample < Simulator
             % Plot triangles
             this.plotTriangles();
         end
-
+        
         function triangulate(this)
             %TRIANGULATE Specify triangulation function for this simulation.
             
@@ -23,7 +23,7 @@ classdef SimulatorExample < Simulator
             this.triangles = closestTriangulation(this.path1, this.path2);
         
             % Set the vehicle thetas
-            dir = this.triangles(1).Dir;
+            dir = this.triangles(1).dir;
             for i = 1:this.nVehicles
                 this.vehicles(i).th = atan2(dir(2), dir(1));
             end 
@@ -39,7 +39,7 @@ classdef SimulatorExample < Simulator
             
             % Iterate through vehicles.
             for i = 1:this.nVehicles
-                
+                                       
                 % If finished skip
                 if this.vehicles(i).finished
                     continue;
@@ -60,7 +60,7 @@ classdef SimulatorExample < Simulator
                 if ~this.triangles(this.vehicles(i).triangleIndex).containsPt(this.vehicles(i).pos)
                     
                     % Get the next index
-                    next = this.triangles(this.vehicles(i).triangleIndex).Next;
+                    next = this.triangles(this.vehicles(i).triangleIndex).nextIndex;
                     
                     % Check if at goal
                     if isnan(next)
@@ -68,7 +68,7 @@ classdef SimulatorExample < Simulator
                         this.vehicles(i).tEnd = this.t;
                     else
                         this.vehicles(i).triangleIndex = next;
-                        dir = this.triangles(next).Dir;
+                        dir = this.triangles(next).dir;
                         this.vehicles(i).th = atan2(dir(2), dir(1));
                     end
                 end
