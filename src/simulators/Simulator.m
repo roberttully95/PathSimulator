@@ -13,6 +13,8 @@ classdef (Abstract) Simulator < handle
     properties (Access = protected)
         finished    % Flag that contains the completion state of the simulation.
         t           % Holds the current time of the simulation
+        hasAxis     % Determines if there has been a valid axis argument passed to the simulator.
+        axis        % Contains the axis on which the items will be rendered.
         handle      % The handle for plotting vehicle objects
     end
     
@@ -39,11 +41,26 @@ classdef (Abstract) Simulator < handle
     % PUBLIC METHODS
     methods
         
-        function init(this, file)
+        function init(this, args)
             %INIT Initializer for the simulator class.
             
+            % Detect invalid number of arguments.
+            n = size(args, 2);
+            if n < 1 || n > 2
+                error("Invalid number of arguments provided");
+            end
+            
             % Set file
-            this.file = strcat(cd, '\data\', file);
+            this.file = strcat(cd, '\data\', args{1});
+            
+            % Set axis
+            if n == 2
+                if isgraphics(args{2})
+                    this.axis = args{2};
+                else
+                    warning("Invalid axis object passed. Continuing without axis.")
+                end
+            end
             
             % Read simulation data from input file.
             this.simData = readJson(this.file);
@@ -59,7 +76,7 @@ classdef (Abstract) Simulator < handle
             this.finished = (this.tEnd == 0);
             
             % Plot region
-            this.initPlot(gca);
+            this.initPlot();
         end
 
         function initVehicles(this)
@@ -84,53 +101,58 @@ classdef (Abstract) Simulator < handle
             this.vehicles = Vehicle.empty(0, n);
             for i = 1:n
                 pt = v1 + d * rand;
-                hold on;
-                scatter(pt(1), pt(2), 'r', '*');
                 this.vehicles(i) = Vehicle(pt(1), pt(2), 0, this.velocity, t0(i));
             end
         end
         
-        function initPlot(this, ax)
+        function initPlot(this)
             %INITPLOT Plots both bounding paths for the region along with edges joining the start
             %and end vertices of the paths.
             
-            % Setup axis
-            cla(ax)
-            ax.DataAspectRatio = [1, 1, 1];
-            hold(ax , 'on');
+            if this.hasAxis
 
-            % Plot the paths
-            this.path1.plot(ax, 'b');
-            this.path2.plot(ax, 'b');
+                % Setup axis
+                cla(this.axis)
+                this.axis.DataAspectRatio = [1, 1, 1];
+                hold(this.axis , 'on');
 
-            % Plot the entry and exit lines.
-            plot(ax, this.entryEdge(:, 1), this.entryEdge(:, 2), 'g', 'LineWidth', 1.5)
-            plot(ax, this.exitEdge(:, 1), this.exitEdge(:, 2), 'r', 'LineWidth', 1.5)
+                % Plot the paths
+                this.path1.plot(this.axis, 'b');
+                this.path2.plot(this.axis, 'b');
 
-            % Plot the vertices along the paths
-            scatter(ax, this.path1.x, this.path1.y, 'r');
-            scatter(ax, this.path2.x, this.path2.y, 'r');
-            
-            % Label Axes
-            xlabel(ax, "x");
-            ylabel(ax, "y");
-            title(ax, "Map Region")
+                % Plot the entry and exit lines.
+                plot(this.axis, this.entryEdge(:, 1), this.entryEdge(:, 2), 'g', 'LineWidth', 1.5)
+                plot(this.axis, this.exitEdge(:, 1), this.exitEdge(:, 2), 'r', 'LineWidth', 1.5)
+
+                % Plot the vertices along the paths
+                scatter(this.axis, this.path1.x, this.path1.y, 'r');
+                scatter(this.axis, this.path2.x, this.path2.y, 'r');
+
+                % Label Axes
+                xlabel(this.axis, "x");
+                ylabel(this.axis, "y");
+                title(this.axis, "Map Region")
+            end
         end
         
-        function plotTriangles(this, ax)
+        function plotTriangles(this)
             %PLOTTRIANGLES Plots the triangles on the map plot.
-            for i = 1:size(this.triangles, 2)
-                % Plot triangle
-                tri = this.triangles(i);
-                tri.plot(gca, 'g');
-                
-                % Get centroid
-                v = tri.centroid;
-                
-                % Get length 
-                len = (1/6) * norm(tri.DirE(1, :) - tri.DirE(2, :));
-                
-                arrows(ax, v(1), v(2), len, 90 - atan2(this.triangles(i).Dir(2), this.triangles(i).Dir(1)) * (180 / pi))
+            
+            if this.hasAxis
+                for i = 1:size(this.triangles, 2)
+                    % Plot triangle
+                    tri = this.triangles(i);
+                    tri.plot(this.axis, 'g');
+
+                    % Get centroid
+                    v = tri.centroid;
+
+                    % Get length 
+                    len = (1/6) * norm(tri.DirE(1, :) - tri.DirE(2, :));
+
+                    % Plot arrows
+                    arrows(this.axis, v(1), v(2), len, 90 - atan2(this.triangles(i).Dir(2), this.triangles(i).Dir(1)) * (180 / pi))
+                end
             end
         end
 
@@ -184,6 +206,10 @@ classdef (Abstract) Simulator < handle
         
         function val = get.nTriangles(this)
             val = size(this.triangles, 2);
+        end
+        
+        function val = get.hasAxis(this)
+            val = ~isempty(this.axis);
         end
     end
 end

@@ -3,17 +3,17 @@ classdef SimulatorExample < Simulator
     %less code needs to be written here which makes the iteration process faster (and easier).
     
     methods
-        function this = SimulatorExample(file)
+        function this = SimulatorExample(varargin)
             %SIMULATOREXAMPLE Instantiate the class.
 
-            % Read the input file.
-            this.init(file);
+            % Read the input.
+            this.init(varargin);
             
             % triangulate
             this.triangulate();
             
             % Plot triangles
-            this.plotTriangles(gca);
+            this.plotTriangles();
         end
 
         function triangulate(this)
@@ -75,9 +75,11 @@ classdef SimulatorExample < Simulator
             end
             
             % Single call to 'scatter' to plot all points
-            hold(gca, 'on');
-            delete(this.handle)
-            this.handle = scatter(x, y, 'r', '*');
+            if this.hasAxis
+                hold(this.axis, 'on');
+                delete(this.handle)
+                this.handle = scatter(this.axis, x, y, 'r', '*'); 
+            end
             
             % If all the vehicles are finished, then we set the finished flag.
             if allFinished
