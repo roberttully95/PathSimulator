@@ -81,11 +81,12 @@ classdef SimulatorExample < Simulator
                 this.handle = scatter(this.axis, x, y, 'r', '*'); 
             end
             
-            % If all the vehicles are finished, then we set the finished flag.
-            if allFinished
-                this.finished = true;
-            end
+            % If all the vehicles are finished, set flag.
+            this.finished = allFinished;
             
+            % Update distance matrix
+            this.updateDistances();
+                        
             % Update time
             this.t = this.t + this.dT;
         end

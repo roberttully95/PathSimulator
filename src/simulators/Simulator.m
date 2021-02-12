@@ -13,6 +13,7 @@ classdef (Abstract) Simulator < handle
         hasAxis     % Determines if there has been a valid axis argument passed to the simulator.
         axis        % Contains the axis on which the items will be rendered.
         handle      % The handle for plotting vehicle objects
+        distances   % The distances between each vehicle (Lower Triangular Matrix)
     end
     
     properties (Dependent)
@@ -67,6 +68,9 @@ classdef (Abstract) Simulator < handle
             
             % Initialize Vehicles
             this.initVehicles();
+            
+            % Initialize distances
+            this.distances = NaN(this.nVehicles, this.nVehicles);
             
             % Set params
             this.t = 0;
@@ -153,6 +157,34 @@ classdef (Abstract) Simulator < handle
             end
         end
 
+        function updateDistances(this)
+            %UPDATEDISTANCES Updates the distance matrix based on the current distance between all
+            %vehicles.
+            
+            % Calculate max index based on the time.
+            max = min(floor((this.t * this.fSpawn) + 1), this.nVehicles);
+            
+            % Iterate through all vehicles.
+            for i = 1:max
+                for j = 1:max
+                    % Keep upper triangular
+                    if i <= j 
+                        continue;
+                    end
+                    
+                    % Only get distance if both are active
+                    if this.t >= this.vehicles(i).tInit && this.t < this.vehicles(i).tEnd && ...
+                            this.t >= this.vehicles(j).tInit && this.t < this.vehicles(j).tEnd
+                        this.distances(i, j) = norm(this.vehicles(i).pos - this.vehicles(j).pos);
+                    else
+                        this.distances(i, j) = NaN;
+                    end
+                    
+                end
+            end
+            
+        end
+        
         function val = isFinished(this)
             val = this.finished;
         end
