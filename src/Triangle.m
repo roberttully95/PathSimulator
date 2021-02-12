@@ -65,6 +65,7 @@ classdef Triangle < handle
         end
         
         function plot(this, ax, color)
+            %PLOT Plots the triangle.
             if nargin == 2
                 color = 'r';
             end
@@ -95,6 +96,7 @@ classdef Triangle < handle
         end
 
         function val = containsPt(this, pt)
+            %CONTAINSPT Determines if a triangle contains a provided point.
             
             d1 = cross2d(pt - this.V2, this.V1 - this.V2);
             d2 = cross2d(pt - this.V3, this.V2 - this.V3);

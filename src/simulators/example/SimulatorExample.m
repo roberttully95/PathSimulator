@@ -64,6 +64,7 @@ classdef SimulatorExample < Simulator
                     
                     % Check if at goal
                     if isnan(next)
+                        this.vehicles(i).active = false;
                         this.vehicles(i).finished = true;
                         this.vehicles(i).tEnd = this.t;
                     else

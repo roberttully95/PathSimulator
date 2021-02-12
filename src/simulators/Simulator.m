@@ -160,29 +160,43 @@ classdef (Abstract) Simulator < handle
         function updateDistances(this)
             %UPDATEDISTANCES Updates the distance matrix based on the current distance between all
             %vehicles.
+
+            % Find indices of vehicles that are active
+            indices = find([this.vehicles.active] == 1);
+            n = size(indices, 2);
             
-            % Calculate max index based on the time.
-            max = min(floor((this.t * this.fSpawn) + 1), this.nVehicles);
-            
-            % Iterate through all vehicles.
-            for i = 1:max
-                for j = 1:max
+            % Create list
+            iList = 1;
+            list = NaN(n*n, 2);
+            for i = 1:n
+                ii = indices(i);
+                for j = 1:n
+                    jj = indices(j);
                     % Keep upper triangular
-                    if i <= j 
+                    if ii <= jj 
                         continue;
                     end
-                    
-                    % Only get distance if both are active
-                    if this.t >= this.vehicles(i).tInit && this.t < this.vehicles(i).tEnd && ...
-                            this.t >= this.vehicles(j).tInit && this.t < this.vehicles(j).tEnd
-                        this.distances(i, j) = norm(this.vehicles(i).pos - this.vehicles(j).pos);
-                    else
-                        this.distances(i, j) = NaN;
-                    end
-                    
+                    list(iList, :) = [ii, jj];
+                    iList = iList + 1;
                 end
             end
+            list(any(isnan(list), 2), :) = [];
             
+            % Get dists
+            if ~isempty(list)
+                
+                % Get locations
+                src = [[this.vehicles(list(:, 1)).x]; [this.vehicles(list(:, 1)).y]]';
+                dst = [[this.vehicles(list(:, 2)).x]; [this.vehicles(list(:, 2)).y]]';
+
+                % Calculate dist
+                dists = src - dst;
+                dists = sqrt(dists(:, 1).^2 + dists(:, 2).^2);
+
+                % Assign all items in parallel
+                idx = sub2ind(size(this.distances), list(:,1), list(:,2)) ; 
+                this.distances(idx) = dists;
+            end
         end
         
         function val = isFinished(this)

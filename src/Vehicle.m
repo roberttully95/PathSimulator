@@ -10,6 +10,7 @@ classdef Vehicle < handle
         tEnd            % The time at which the vehicle exits the 'map'
         finished        % Flag that determines if the vehicle has exited the 'map'.
         triangleIndex   % The index of the triangle within the triangles array that the vehicle is currently in.
+        active          % Flag that determines if the vehicle is actively in the map.
     end
     
     properties (Dependent)
@@ -27,6 +28,7 @@ classdef Vehicle < handle
             this.setInitialConditions(x0, y0, th0, v0, t0);
             this.tEnd = Inf;
             this.triangleIndex = 1;
+            this.active = (this.tInit == 0);
         end
         
         function setInitialConditions(this, x0, y0, th0, v0, t0)
@@ -42,6 +44,7 @@ classdef Vehicle < handle
         end
         
         function propogate(this, dT)
+            this.active = true;
             this.x = this.x + this.vx * dT;
             this.y = this.y + this.vy * dT;
         end
