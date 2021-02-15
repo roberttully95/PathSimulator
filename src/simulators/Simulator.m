@@ -2,13 +2,13 @@ classdef (Abstract) Simulator < handle
     %SIMULATOR Simulator base class. All of the code that is common between different algorithms
     %should be written here. This includes plotting the paths, reading data from input files, etc.
     
+    % Simulation
     properties
         file            % Complete path to the .json file.
         triangles       % Array of triangles that form the map
         simData         % Simulation-level parameters / information
         vehicles        % Array of vehicles.
         dT              % The time difference between consecutive timesteps.
-        finished        % Flag that contains the completion state of the simulation.
         t               % Holds the current time of the simulation
         hasAxis         % Determines if there has been a valid axis argument passed to the simulator.
         axis            % Contains the axis on which the items will be rendered.
@@ -29,6 +29,18 @@ classdef (Abstract) Simulator < handle
         nTriangles      % The number of triangles in the simulation.
         activeVehicles  % The list of active vehicle indices
         nActiveVehicles % The number of active vehicles in the map.
+        avgClosestDist  % Returns the average closest distance between adjacent vehicles.
+        avgDist         % Returns the average distance between all vehicles.
+        finished        % Flag that contains the completion state of the simulation.
+    end
+    
+    % Logging
+    properties
+        LOG_FILE                % Path to the current simulation's logging directory.
+        TIME                    % Records the simulation time
+        NUM_ACTIVE_VEHICLES     % Records the number of active vehicles at each time step.
+        AVERAGE_CLOSEST_DIST    % Records the average closest distance between adjacent vehicles
+        AVERAGE_DIST            % Records the average distance between all vehicles
     end
     
     methods (Abstract)
@@ -51,7 +63,8 @@ classdef (Abstract) Simulator < handle
             end
             
             % Set file
-            this.file = strcat(cd, '\data\', args{1});
+            [~, filename, fileext] = fileparts(args{1});
+            this.file = strcat(cd, '\data\', filename, fileext);
             
             % Set axis
             if n == 2
@@ -61,6 +74,10 @@ classdef (Abstract) Simulator < handle
                     warning("Invalid axis object passed. Continuing without axis.")
                 end
             end
+            
+            % Create logging directorys
+            [~, ~, ~] = mkdir(strcat(cd, "\logs"));
+            this.LOG_FILE = strcat(cd, "\logs\",  filename, ".xls");
             
             % Read simulation data from input file.
             this.simData = readJson(this.file);
@@ -76,7 +93,6 @@ classdef (Abstract) Simulator < handle
             
             % Set params
             this.t = 0;
-            this.finished = (this.tEnd == 0);
             
             % Plot region
             this.initPlot();
@@ -159,6 +175,11 @@ classdef (Abstract) Simulator < handle
             end
         end
 
+        function terminateVehicle(this, i)
+            this.vehicles(i).terminate(this.t); % set vehicle flags
+            this.distances(i, :) = NaN;
+        end
+        
         function updateDistances(this)
             %UPDATEDISTANCES Updates the distance matrix based on the current distance between all
             %vehicles.
@@ -201,8 +222,19 @@ classdef (Abstract) Simulator < handle
             end
         end
         
-        function val = isFinished(this)
-            val = this.finished;
+        % Appends data to logging variables.
+        function LOG(this)
+            this.TIME = [this.TIME; this.t];
+            this.NUM_ACTIVE_VEHICLES = [this.NUM_ACTIVE_VEHICLES; this.nActiveVehicles];
+            this.AVERAGE_CLOSEST_DIST = [this.AVERAGE_CLOSEST_DIST; this.avgClosestDist];
+            this.AVERAGE_DIST = [this.AVERAGE_DIST; this.avgDist];
+        end
+        
+        % Writes data in logging parameters to the log files.
+        function DUMP(this)
+            X = [{'Time','NUM_ACTIVE_VEHICLES','AVERAGE_CLOSEST_DIST','AVERAGE_DIST'};...
+                num2cell(this.TIME), num2cell(this.NUM_ACTIVE_VEHICLES), num2cell(this.AVERAGE_CLOSEST_DIST), num2cell(this.AVERAGE_DIST)];
+            xlswrite(this.LOG_FILE, X)
         end
     end
     
@@ -227,7 +259,7 @@ classdef (Abstract) Simulator < handle
         
         function val = get.tEnd(this)
             val = (this.nVehicles - 1)/this.fSpawn;
-        end
+        end 
         
         function val = get.seed(this)
             val = this.simData.properties.seed;
@@ -263,6 +295,18 @@ classdef (Abstract) Simulator < handle
         
         function val = get.nActiveVehicles(this)
             val = size(this.activeVehicles, 2);
+        end
+        
+        function val = get.avgClosestDist(this)
+            val = mean(min(this.distances), 'omitnan');
+        end
+        
+        function val = get.avgDist(this)
+            val = mean(this.distances, 'all', 'omitnan');
+        end
+        
+        function val = get.finished(this)
+            val = (this.nActiveVehicles == 0);
         end
     end
 end

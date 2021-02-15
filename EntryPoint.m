@@ -8,7 +8,7 @@ jsonFile = 'jsonTest1.json';
 
 % Initialize simulator.
 sim = SimulatorExample(jsonFile, gca);
-while ~sim.isFinished()
+while ~sim.finished
     sim.propogate();
     pause(sim.dT);
 end
