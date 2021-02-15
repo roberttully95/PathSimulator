@@ -176,8 +176,10 @@ classdef (Abstract) Simulator < handle
         end
 
         function terminateVehicle(this, i)
+            %TERMINATEVEHICLE Terminates a vehicle.
             this.vehicles(i).terminate(this.t); % set vehicle flags
             this.distances(i, :) = NaN;
+            this.distances(:, i) = NaN;
         end
         
         function updateDistances(this)
