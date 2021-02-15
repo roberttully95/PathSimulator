@@ -7,10 +7,8 @@ addpath(genpath("src"))
 jsonFile = 'jsonTest1.json';
 
 % Initialize simulator.
-sim = SimulatorExample(jsonFile, gca);
+sim = SimulatorExample(jsonFile);
 while ~sim.finished
     sim.propogate();
-    pause(sim.dT);
 end
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

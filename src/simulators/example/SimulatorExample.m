@@ -76,7 +76,8 @@ classdef SimulatorExample < Simulator
             if this.hasAxis
                 hold(this.axis, 'on');
                 delete(this.handle)
-                this.handle = scatter(this.axis, x, y, 'r', '*'); 
+                this.handle = scatter(this.axis, x, y, 'r', '*');
+                pause(this.dT);
             end
             
             % If all the vehicles are finished, set flag.
