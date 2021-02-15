@@ -74,13 +74,17 @@ classdef Vehicle < handle
             val = this.tEnd - this.tInit;
         end
         
-        function  plot(this, ax, color)
+        function plot(this, ax, color)
             % PLOT Plots the 2D location of the vehicle.
             arrows(ax, this.x, this.y, 1, 90 - this.th * 180 / pi);
             scatter(ax, this.x, this.y, color, '*');
         end
         
-        
+        function terminate(this, t)
+            this.active = false;
+            this.finished = true;
+            this.tEnd = t;
+        end
     end
 end
 

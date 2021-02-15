@@ -3,30 +3,32 @@ classdef (Abstract) Simulator < handle
     %should be written here. This includes plotting the paths, reading data from input files, etc.
     
     properties
-        file        % Complete path to the .json file.
-        triangles   % Array of triangles that form the map
-        simData     % Simulation-level parameters / information
-        vehicles    % Array of vehicles.
-        dT          % The time difference between consecutive timesteps.
-        finished    % Flag that contains the completion state of the simulation.
-        t           % Holds the current time of the simulation
-        hasAxis     % Determines if there has been a valid axis argument passed to the simulator.
-        axis        % Contains the axis on which the items will be rendered.
-        handle      % The handle for plotting vehicle objects
-        distances   % The distances between each vehicle (Lower Triangular Matrix)
+        file            % Complete path to the .json file.
+        triangles       % Array of triangles that form the map
+        simData         % Simulation-level parameters / information
+        vehicles        % Array of vehicles.
+        dT              % The time difference between consecutive timesteps.
+        finished        % Flag that contains the completion state of the simulation.
+        t               % Holds the current time of the simulation
+        hasAxis         % Determines if there has been a valid axis argument passed to the simulator.
+        axis            % Contains the axis on which the items will be rendered.
+        handle          % The handle for plotting vehicle objects
+        distances       % The distances between each vehicle (Lower Triangular Matrix)
     end
     
     properties (Dependent)
-        path1       % The first bounding path.
-        path2       % The second bounding path. 
-        tEnd        % The latest time that a vehicle can be spawned.
-        fSpawn      % The frequency at which vehicles are spawned into the map.
-        seed        % The random number seed that allows for reproducability of simulations.
-        velocity    % The nominal velocity of the vehicles in the simulation.
-        entryEdge   % The edge that the vehicles will enter from.
-        exitEdge    % The edge that the vehicles will exit from.
-        nVehicles   % The number of vehicles in the simulation
-        nTriangles  % The number of triangles in the simulation.
+        path1           % The first bounding path.
+        path2           % The second bounding path. 
+        tEnd            % The latest time that a vehicle can be spawned.
+        fSpawn          % The frequency at which vehicles are spawned into the map.
+        seed            % The random number seed that allows for reproducability of simulations.
+        velocity        % The nominal velocity of the vehicles in the simulation.
+        entryEdge       % The edge that the vehicles will enter from.
+        exitEdge        % The edge that the vehicles will exit from.
+        nVehicles       % The number of vehicles in the simulation
+        nTriangles      % The number of triangles in the simulation.
+        activeVehicles  % The list of active vehicle indices
+        nActiveVehicles % The number of active vehicles in the map.
     end
     
     methods (Abstract)
@@ -79,7 +81,7 @@ classdef (Abstract) Simulator < handle
             % Plot region
             this.initPlot();
         end
-
+        
         function initVehicles(this)
             %INITVEHICLES Randomly initializes vehicles along the entry edge of the region. Does not
             %initialize the heading of the vehicles, however. The initialized heading is determined
@@ -253,6 +255,14 @@ classdef (Abstract) Simulator < handle
         
         function val = get.hasAxis(this)
             val = ~isempty(this.axis);
+        end
+        
+        function val = get.activeVehicles(this)
+            val = find([this.vehicles.active] == 1);
+        end
+        
+        function val = get.nActiveVehicles(this)
+            val = size(this.activeVehicles, 2);
         end
     end
 end

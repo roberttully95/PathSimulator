@@ -1,7 +1,7 @@
 classdef SimulatorExample < Simulator
     %SIMULATOREXAMPLE This is an example of a simulator class that derives the base class. Much
     %less code needs to be written here which makes the iteration process faster (and easier).
-    
+        
     methods
         function this = SimulatorExample(varargin)
             %SIMULATOREXAMPLE Instantiate the class.
@@ -64,9 +64,7 @@ classdef SimulatorExample < Simulator
                     
                     % Check if at goal
                     if isnan(next)
-                        this.vehicles(i).active = false;
-                        this.vehicles(i).finished = true;
-                        this.vehicles(i).tEnd = this.t;
+                        this.vehicles(i).terminate(this.t);
                     else
                         this.vehicles(i).triangleIndex = next;
                         dir = this.triangles(next).dir;
@@ -91,6 +89,9 @@ classdef SimulatorExample < Simulator
             % Update time
             this.t = this.t + this.dT;
         end
+
     end
+    
+
 end
 
