@@ -4,11 +4,13 @@ addpath(genpath("src"))
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Specify file location
-jsonFile = 'jsonTest1.json';
+triangleJsonFile = 'triangleTest1.json';
+pathJsonFile = 'pathTest1.json';
 
-% Initialize simulator.
-sim = SimulatorExample(jsonFile);
-while ~sim.finished
-    sim.propogate();
+% Initialize simulators.
+sim1 = ManualTriangleSimulator(triangleJsonFile, 1);
+while ~sim1.finished
+    sim1.propogate();
 end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -11,26 +11,31 @@ function data = readJson(file)
     objects = struct_.features;
     n = size(objects, 1);
     
+    % Set map type
+    data.type = struct_.type;
+    
     % Copy the map-level properties.
     data.properties = struct_.properties;
 
     % Init obstacles
     data.paths = Path.empty(n, 0);
-
+    data.triangles = Triangle.empty(n, 0);
+    
     % Parse through objects
-    j = 1;
+    jPath = 1;
+    jTri = 1;
     for i = 1:n
         obj = objects(i);
         coords = squeeze(obj.geometry.coordinates);
         switch obj.type
             case "Path"
-                data.paths(j) = Path(coords(:, 1), coords(:, 2));
-                j = j + 1;
+                data.paths(jPath) = Path(coords(:, 1), coords(:, 2));
+                jPath = jPath + 1;
+            case "Triangle"
+                data.triangles(jTri) = Triangle(coords(1, :), coords(2, :), coords(3, :), 'Vertices');
+                jTri = jTri + 1;
             otherwise
                 warning("Invalid map object provided.")
-        end
-        if j == 3
-            break;
         end
     end
 end

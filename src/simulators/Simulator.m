@@ -4,6 +4,7 @@ classdef (Abstract) Simulator < handle
     
     % Simulation
     properties
+        type            % Determines the type of provided data (paths / triangles)
         file            % Complete path to the .json file.
         triangles       % Array of triangles that form the map
         simData         % Simulation-level parameters / information
@@ -79,6 +80,11 @@ classdef (Abstract) Simulator < handle
             % Read simulation data from input file.
             this.simData = readJson(this.file);
 
+            % Ensure correct type of map is being used
+            if this.simData.type ~= this.type
+                error("Invalid map type being used.")
+            end
+            
             % Setup random number generator
             rng(this.seed, 'combRecursive');
             
@@ -226,7 +232,7 @@ classdef (Abstract) Simulator < handle
             %vehicles.
 
             % Find indices of vehicles that are active
-            indices = find([this.vehicles.active] == 1);
+            indices = this.activeVehicles;
             n = size(indices, 2);
             
             % Create list
