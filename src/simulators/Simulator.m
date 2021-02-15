@@ -10,13 +10,15 @@ classdef (Abstract) Simulator < handle
         vehicles        % Array of vehicles.
         dT              % The time difference between consecutive timesteps.
         t               % Holds the current time of the simulation
-        hasAxis         % Determines if there has been a valid axis argument passed to the simulator.
-        axis            % Contains the axis on which the items will be rendered.
+        plotMode        % Determines now the data will be plotted.
         handle          % The handle for plotting vehicle objects
         distances       % The distances between each vehicle (Lower Triangular Matrix)
+        mapAxis         % The axis for plotting the map.
+        dataAxis        % THe map for plotting vehicle-level data.
     end
     
     properties (Dependent)
+        hasAxis         % Determines if there has been a valid axis argument passed to the simulator.
         path1           % The first bounding path.
         path2           % The second bounding path. 
         tEnd            % The latest time that a vehicle can be spawned.
@@ -36,7 +38,9 @@ classdef (Abstract) Simulator < handle
     
     % Logging
     properties
-        LOG_FILE                % Path to the current simulation's logging directory.
+        LOG_PATH                % Path to the current simulation's logging directory.
+        TIME_PATH               % Path to the current simulation's time spreadsheet.
+        EVENT_PATH              % Path to the curretn simulation's event spreadsheet.
         TIME                    % Records the simulation time
         NUM_ACTIVE_VEHICLES     % Records the number of active vehicles at each time step.
         AVERAGE_CLOSEST_DIST    % Records the average closest distance between adjacent vehicles
@@ -66,18 +70,11 @@ classdef (Abstract) Simulator < handle
             [~, filename, fileext] = fileparts(args{1});
             this.file = strcat(cd, '\data\', filename, fileext);
             
-            % Set axis
-            if n == 2
-                if isgraphics(args{2})
-                    this.axis = args{2};
-                else
-                    warning("Invalid axis object passed. Continuing without axis.")
-                end
-            end
-            
             % Create logging directorys
-            [~, ~, ~] = mkdir(strcat(cd, "\logs"));
-            this.LOG_FILE = strcat(cd, "\logs\",  filename, ".xls");
+            this.LOG_PATH = strcat(cd, "\logs\",  filename);
+            this.TIME_PATH = strcat(this.LOG_PATH, "\time.xls");
+            this.EVENT_PATH = strcat(this.LOG_PATH, "\event.xls");
+            [~, ~, ~] = mkdir(this.LOG_PATH);
             
             % Read simulation data from input file.
             this.simData = readJson(this.file);
@@ -87,6 +84,12 @@ classdef (Abstract) Simulator < handle
             
             % Initialize Vehicles
             this.initVehicles();
+            
+            % Set figures / axes
+            this.plotMode = 0;
+            if n == 2
+                this.plotMode = args{2};
+            end
             
             % Initialize distances
             this.distances = NaN(this.nVehicles, this.nVehicles);
@@ -129,28 +132,39 @@ classdef (Abstract) Simulator < handle
             %and end vertices of the paths.
             
             if this.hasAxis
+                
+                % Initialize plot map.
+                fig = figure(1);
+                this.mapAxis = axes(fig);
 
                 % Setup axis
-                cla(this.axis)
-                this.axis.DataAspectRatio = [1, 1, 1];
-                hold(this.axis , 'on');
+                cla(this.mapAxis);
+                this.mapAxis.DataAspectRatio = [1, 1, 1];
+                hold(this.mapAxis , 'on');
 
                 % Plot the paths
-                this.path1.plot(this.axis, 'b');
-                this.path2.plot(this.axis, 'b');
+                this.path1.plot(this.mapAxis, 'b');
+                this.path2.plot(this.mapAxis, 'b');
 
                 % Plot the entry and exit lines.
-                plot(this.axis, this.entryEdge(:, 1), this.entryEdge(:, 2), 'g', 'LineWidth', 1.5)
-                plot(this.axis, this.exitEdge(:, 1), this.exitEdge(:, 2), 'r', 'LineWidth', 1.5)
+                plot(this.mapAxis, this.entryEdge(:, 1), this.entryEdge(:, 2), 'g', 'LineWidth', 1.5)
+                plot(this.mapAxis, this.exitEdge(:, 1), this.exitEdge(:, 2), 'r', 'LineWidth', 1.5)
 
                 % Plot the vertices along the paths
-                scatter(this.axis, this.path1.x, this.path1.y, 'r');
-                scatter(this.axis, this.path2.x, this.path2.y, 'r');
+                scatter(this.mapAxis, this.path1.x, this.path1.y, 'r');
+                scatter(this.mapAxis, this.path2.x, this.path2.y, 'r');
 
                 % Label Axes
-                xlabel(this.axis, "x");
-                ylabel(this.axis, "y");
-                title(this.axis, "Map Region")
+                xlabel(this.mapAxis, "x");
+                ylabel(this.mapAxis, "y");
+                title(this.mapAxis, "Map Region")
+                
+                % Set data axis
+                if this.plotMode == 2
+                    fig = figure(2);
+                    this.dataAxis = axes(fig);
+                end
+                
             end
         end
         
@@ -161,7 +175,7 @@ classdef (Abstract) Simulator < handle
                 for i = 1:size(this.triangles, 2)
                     % Plot triangle
                     tri = this.triangles(i);
-                    tri.plot(this.axis, 'g');
+                    tri.plot(this.mapAxis, 'g');
 
                     % Get centroid
                     v = tri.centroid;
@@ -170,7 +184,7 @@ classdef (Abstract) Simulator < handle
                     len = (1/6) * tri.dirLength;
 
                     % Plot arrows
-                    arrows(this.axis, v(1), v(2), len, 90 - atan2(tri.dir(2), tri.dir(1)) * (180 / pi))
+                    arrows(this.mapAxis, v(1), v(2), len, 90 - atan2(tri.dir(2), tri.dir(1)) * (180 / pi))
                 end
             end
         end
@@ -219,13 +233,15 @@ classdef (Abstract) Simulator < handle
                 dists = sqrt(dists(:, 1).^2 + dists(:, 2).^2);
 
                 % Assign all items in parallel
-                idx = sub2ind(size(this.distances), list(:,1), list(:,2)) ; 
-                this.distances(idx) = dists;
+                idx1 = sub2ind(size(this.distances), list(:,1), list(:,2));
+                idx2 = sub2ind(size(this.distances), list(:,2), list(:,1)); 
+                this.distances(idx1) = dists;
+                this.distances(idx2) = dists;
             end
         end
         
-        % Appends data to logging variables.
-        function LOG(this)
+        % Appends current data to the time logger.
+        function TIMELOG(this)
             this.TIME = [this.TIME; this.t];
             this.NUM_ACTIVE_VEHICLES = [this.NUM_ACTIVE_VEHICLES; this.nActiveVehicles];
             this.AVERAGE_CLOSEST_DIST = [this.AVERAGE_CLOSEST_DIST; this.avgClosestDist];
@@ -234,14 +250,19 @@ classdef (Abstract) Simulator < handle
         
         % Writes data in logging parameters to the log files.
         function DUMP(this)
-            X = [{'Time','NUM_ACTIVE_VEHICLES','AVERAGE_CLOSEST_DIST','AVERAGE_DIST'};...
+            TIME_DATA = [{'Time','NUM_ACTIVE_VEHICLES','AVERAGE_CLOSEST_DIST','AVERAGE_DIST'};...
                 num2cell(this.TIME), num2cell(this.NUM_ACTIVE_VEHICLES), num2cell(this.AVERAGE_CLOSEST_DIST), num2cell(this.AVERAGE_DIST)];
-            xlswrite(this.LOG_FILE, X)
+            xlswrite(this.TIME_PATH, TIME_DATA)
         end
+        
     end
     
     % GETTERS
     methods 
+        
+        function val = get.hasAxis(this)
+            val = (this.plotMode > 0);
+        end
         
         function val = get.path1(this)
             val = this.simData.paths(1);
@@ -286,11 +307,7 @@ classdef (Abstract) Simulator < handle
         function val = get.nTriangles(this)
             val = size(this.triangles, 2);
         end
-        
-        function val = get.hasAxis(this)
-            val = ~isempty(this.axis);
-        end
-        
+                
         function val = get.activeVehicles(this)
             val = find([this.vehicles.active] == 1);
         end
@@ -310,6 +327,7 @@ classdef (Abstract) Simulator < handle
         function val = get.finished(this)
             val = (this.nActiveVehicles == 0);
         end
+        
     end
 end
 

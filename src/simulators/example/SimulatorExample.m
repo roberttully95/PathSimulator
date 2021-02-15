@@ -5,15 +5,33 @@ classdef SimulatorExample < Simulator
     methods
         function this = SimulatorExample(varargin)
             %SIMULATOREXAMPLE Instantiate the class.
-
+            
+            % Parse input data
+            if nargin == 1
+                varargs_ = varargin(1);
+                override = 0;
+            elseif nargin >= 2 
+            	varargs_ = varargin(1:2);
+                override = 0;
+            elseif nargin == 3
+                override = 1;
+            end
+            
             % Read the input.
-            this.init(varargin);
+            this.init(varargs_);
+            if override
+                this.overrideData();
+            end
             
             % triangulate
             this.triangulate();
             
             % Plot triangles
             this.plotTriangles();
+        end
+        
+        function overrideData(this)
+             % WRITE STUFF HERE
         end
         
         function triangulate(this)
@@ -38,15 +56,20 @@ classdef SimulatorExample < Simulator
             
             % Iterate through vehicles.
             for i = 1:this.nVehicles
-                                       
-                % If finished skip
+                
+                % If finished has finished crossing the map
                 if this.vehicles(i).finished
                     continue;
                 end
                 
-                % Don't consider ended vehicles
+                % If the vehicle has not yet started crossing the map.
                 if this.t < this.vehicles(i).tInit
                     continue;
+                end
+                
+                % If vehicle has just been initialized within the map in the last time step.
+                if this.t - this.dT < this.vehicles(i).tInit && this.t >= this.vehicles(i).tInit
+                    this.vehicles(i).active = true;
                 end
                 
                 % Propogate vehicle
@@ -70,23 +93,26 @@ classdef SimulatorExample < Simulator
                     end
                 end
             end
-            this.LOG();
+            
+            % Update distance matrix
+            this.updateDistances();
+            
+            % log new data
+            this.TIMELOG();
             
             % Single call to 'scatter' to plot all points
             if this.hasAxis
-                hold(this.axis, 'on');
+                hold(this.mapAxis, 'on');
                 delete(this.handle)
-                this.handle = scatter(this.axis, x, y, 'r', '*');
+                this.handle = scatter(this.mapAxis, x, y, 'r', '*');
                 pause(this.dT);
             end
             
             % If all the vehicles are finished, set flag.
             if this.finished
                 this.DUMP();
+                return;
             end
-            
-            % Update distance matrix
-            this.updateDistances();
                         
             % Update time
             this.t = this.t + this.dT;

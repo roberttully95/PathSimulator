@@ -44,7 +44,6 @@ classdef Vehicle < handle
         end
         
         function propogate(this, dT)
-            this.active = true;
             this.x = this.x + this.vx * dT;
             this.y = this.y + this.vy * dT;
         end
