@@ -50,10 +50,6 @@ classdef SimulatorExample < Simulator
         function propogate(this)
             % PROPOGATE Propogates the simulation by 'dT' seconds.
             
-            % Store x and y positions for all vehicles
-            x = NaN(this.nVehicles, 1);
-            y = NaN(this.nVehicles, 1);
-            
             % Iterate through vehicles.
             for i = 1:this.nVehicles
                 
@@ -74,9 +70,7 @@ classdef SimulatorExample < Simulator
                 
                 % Propogate vehicle
                 this.vehicles(i).propogate(this.dT);
-                x(i) = this.vehicles(i).x;
-                y(i) = this.vehicles(i).y;
-                
+
                 % If it has changed triangles, update heading / velocity.
                 if ~this.triangles(this.vehicles(i).triangleIndex).containsPt(this.vehicles(i).pos)
                     
@@ -101,12 +95,7 @@ classdef SimulatorExample < Simulator
             this.TIMELOG();
             
             % Single call to 'scatter' to plot all points
-            if this.hasAxis
-                hold(this.mapAxis, 'on');
-                delete(this.handle)
-                this.handle = scatter(this.mapAxis, x, y, 'r', '*');
-                pause(this.dT);
-            end
+            this.plotVehicles();
             
             % If all the vehicles are finished, set flag.
             if this.finished
@@ -116,6 +105,7 @@ classdef SimulatorExample < Simulator
                         
             % Update time
             this.t = this.t + this.dT;
+            this.pause(this.dT);
         end
 
     end

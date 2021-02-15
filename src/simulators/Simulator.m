@@ -189,6 +189,31 @@ classdef (Abstract) Simulator < handle
             end
         end
 
+        function pause(this, time)
+            % PAUSE Pauses the simulation for a specified time.
+            if this.hasAxis
+                pause(time);
+            end
+        end
+        
+        function plotVehicles(this)
+            %PLOTVEHICLES Plots the currently active vehicles in the map.
+            % Get position of active vehicles.
+            
+            if this.hasAxis 
+                % Get locations
+                i = this.activeVehicles;
+                x = [this.vehicles(i).x];
+                y = [this.vehicles(i).y];
+
+                % Plot data
+                hold(this.mapAxis, 'on');
+                delete(this.handle)
+                this.handle = scatter(this.mapAxis, x, y, 'r', '*');
+            end
+        end
+        
+        
         function terminateVehicle(this, i)
             %TERMINATEVEHICLE Terminates a vehicle.
             this.vehicles(i).terminate(this.t); % set vehicle flags
