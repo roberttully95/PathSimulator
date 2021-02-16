@@ -109,7 +109,7 @@ classdef SimulatorExample < Simulator
 
                 % Update time
                 this.t = this.t + this.dT;
-                this.pause(this.dT);
+                this.pause();
             end
         end
     end

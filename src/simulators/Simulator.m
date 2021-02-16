@@ -5,6 +5,7 @@ classdef (Abstract) Simulator < handle
     % Simulation
     properties
         type            % Determines the type of provided data (paths / triangles)
+        speedup         % Determines the speedup factor of running the code in real-time.
         file            % Complete path to the .json file.
         triangles       % Array of triangles that form the map
         simData         % Simulation-level parameters / information
@@ -102,6 +103,7 @@ classdef (Abstract) Simulator < handle
             
             % Set params
             this.t = 0;
+            this.speedup = 1;
             
             % Plot region
             this.initPlot();
@@ -195,10 +197,10 @@ classdef (Abstract) Simulator < handle
             end
         end
 
-        function pause(this, time)
+        function pause(this)
             % PAUSE Pauses the simulation for a specified time.
             if this.hasAxis
-                pause(time);
+                pause(this.dT / this.speedup);
             end
         end
         
