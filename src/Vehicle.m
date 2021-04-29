@@ -11,6 +11,7 @@ classdef Vehicle < handle
         finished        % Flag that determines if the vehicle has exited the 'map'.
         triangleIndex   % The index of the triangle within the triangles array that the vehicle is currently in.
         active          % Flag that determines if the vehicle is actively in the map.
+        controller      % Defines the controller for the vehicle
     end
     
     properties (Dependent)
@@ -23,12 +24,13 @@ classdef Vehicle < handle
     
     methods
         
-        function this = Vehicle(x0, y0, th0, v0, t0)
+        function this = Vehicle(x0, y0, th0, v0, t0, controller)
             % VEHICLE2D Constructor taking initial conditions
             this.setInitialConditions(x0, y0, th0, v0, t0);
             this.tEnd = Inf;
             this.triangleIndex = 1;
             this.active = (this.tInit == 0);
+            this.controller = controller;
         end
         
         function setInitialConditions(this, x0, y0, th0, v0, t0)
@@ -44,6 +46,8 @@ classdef Vehicle < handle
         end
         
         function propogate(this, dT)
+            % PROPOGATE Propogates the vehicle forward based on the current
+            % position and velocity.
             this.x = this.x + this.vx * dT;
             this.y = this.y + this.vy * dT;
         end
@@ -80,6 +84,7 @@ classdef Vehicle < handle
         end
         
         function terminate(this, t)
+            % TERMINATE Terminates the vehicle.
             this.active = false;
             this.finished = true;
             this.tEnd = t;

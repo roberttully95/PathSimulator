@@ -16,7 +16,7 @@ classdef (Abstract) Simulator < handle
         handle          % The handle for plotting vehicle objects
         distances       % The distances between each vehicle (Lower Triangular Matrix)
         mapAxis         % The axis for plotting the map.
-        dataAxis        % THe map for plotting vehicle-level data.
+        dataAxis        % The map for plotting vehicle-level data.
     end
     
     properties (Dependent)
@@ -114,6 +114,9 @@ classdef (Abstract) Simulator < handle
             %initialize the heading of the vehicles, however. The initialized heading is determined
             %by the triangulation method in the derived method.
             
+            % Get the controller
+            controller = Controller(this.simData.properties.controller);
+            
             % Create array of spawn times
             t0 = 0:(1/this.fSpawn):this.tEnd;
             
@@ -131,7 +134,7 @@ classdef (Abstract) Simulator < handle
             this.vehicles = Vehicle.empty(0, n);
             for i = 1:n
                 pt = v1 + d * rand;
-                this.vehicles(i) = Vehicle(pt(1), pt(2), 0, this.velocity, t0(i));
+                this.vehicles(i) = Vehicle(pt(1), pt(2), 0, this.velocity, t0(i), controller);
             end
         end
         

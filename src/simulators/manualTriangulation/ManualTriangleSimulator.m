@@ -13,10 +13,10 @@ classdef ManualTriangleSimulator < Simulator
             if nargin == 1
                 varargs_ = varargin(1);
                 override = 0;
-            elseif nargin >= 2 
+            elseif nargin >= 2
                 varargs_ = varargin(1:2);
                 override = 0;
-            elseif nargin == 3
+            elseif nargin == 2
                 override = 1;
             end
 

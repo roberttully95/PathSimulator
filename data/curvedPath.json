@@ -9,7 +9,8 @@
     "minimumTurnRadius": 1,
     "omegaMax": 0.78539816339744828,
     "maxBankAngle": 1.0471975511965976,
-    "seed": 3.768277484E+9
+    "seed": 3.768277484E+9,
+    "controller": "BangBang"
   },
   "features": 
   [
