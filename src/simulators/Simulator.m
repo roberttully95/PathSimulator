@@ -27,6 +27,8 @@ classdef (Abstract) Simulator < handle
         fSpawn          % The frequency at which vehicles are spawned into the map.
         seed            % The random number seed that allows for reproducability of simulations.
         velocity        % The nominal velocity of the vehicles in the simulation.
+        vehicleRadius   % The radius of the vehicle in meters.
+        omegaMax        % The max turn rate of the vehicle in rads / s.
         entryEdge       % The edge that the vehicles will enter from.
         exitEdge        % The edge that the vehicles will exit from.
         nVehicles       % The number of vehicles in the simulation
@@ -114,8 +116,10 @@ classdef (Abstract) Simulator < handle
             %initialize the heading of the vehicles, however. The initialized heading is determined
             %by the triangulation method in the derived method.
             
+            %dT, Kp, Ki, Kd, thDotMax
+            
             % Get the controller
-            controller = Controller(this.simData.properties.controller);
+            controller = HeadingController(this.dT, Inf, 0, 0, this.omegaMax);
             
             % Create array of spawn times
             t0 = 0:(1/this.fSpawn):this.tEnd;
@@ -134,7 +138,7 @@ classdef (Abstract) Simulator < handle
             this.vehicles = Vehicle.empty(0, n);
             for i = 1:n
                 pt = v1 + d * rand;
-                this.vehicles(i) = Vehicle(pt(1), pt(2), 0, this.velocity, t0(i), controller);
+                this.vehicles(i) = Vehicle(pt(1), pt(2), 0, this.velocity, t0(i), this.vehicleRadius, this.omegaMax, controller);
             end
         end
         
@@ -216,11 +220,14 @@ classdef (Abstract) Simulator < handle
                 i = this.activeVehicles;
                 x = [this.vehicles(i).x];
                 y = [this.vehicles(i).y];
-
+                r = [this.vehicles(i).r];
+                
                 % Plot data
                 hold(this.mapAxis, 'on');
                 delete(this.handle)
-                this.handle = scatter(this.mapAxis, x, y, 'r', '*');
+                
+                % Plot the circle
+                this.handle = viscircles([x', y'], r');
             end
         end
         
@@ -339,6 +346,14 @@ classdef (Abstract) Simulator < handle
         function val = get.nVehicles(this)
             val = this.simData.properties.nVehicles;
         end
+
+        function val = get.vehicleRadius(this)
+            val = this.simData.properties.vehicleRadius;
+        end
+        
+        function val = get.omegaMax(this)
+            val = this.simData.properties.omegaMax;
+        end
         
         function val = get.nTriangles(this)
             val = size(this.triangles, 2);
@@ -364,6 +379,9 @@ classdef (Abstract) Simulator < handle
             val = (this.nActiveVehicles == 0);
         end
         
+
+        
     end
+    
 end
 

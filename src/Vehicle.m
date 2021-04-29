@@ -8,6 +8,8 @@ classdef Vehicle < handle
         v               % Current velocity of the vehicle.
         tInit           % The time at which the vehicle enters the 'map'
         tEnd            % The time at which the vehicle exits the 'map'
+        r               % The radius of the vehicle
+        wMax            % The max turn rate of the vehicle
         finished        % Flag that determines if the vehicle has exited the 'map'.
         triangleIndex   % The index of the triangle within the triangles array that the vehicle is currently in.
         active          % Flag that determines if the vehicle is actively in the map.
@@ -24,12 +26,14 @@ classdef Vehicle < handle
     
     methods
         
-        function this = Vehicle(x0, y0, th0, v0, t0, controller)
+        function this = Vehicle(x0, y0, th0, v0, t0, r, wMax, controller)
             % VEHICLE2D Constructor taking initial conditions
             this.setInitialConditions(x0, y0, th0, v0, t0);
             this.tEnd = Inf;
             this.triangleIndex = 1;
             this.active = (this.tInit == 0);
+            this.r = r;
+            this.wMax = wMax;
             this.controller = controller;
         end
         
