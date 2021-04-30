@@ -49,11 +49,20 @@ classdef Vehicle < handle
             this.finished = false;
         end
         
-        function propogate(this, dT)
+        function propogate(this, dT, thDesired)
             % PROPOGATE Propogates the vehicle forward based on the current
             % position and velocity.
-            this.x = this.x + this.vx * dT;
-            this.y = this.y + this.vy * dT;
+            
+            if abs(thDesired - this.th) > 0.01
+                disp('')
+            end
+            
+            % Determine the actual heading using the controller
+            this.th = this.th + this.controller.calculate(thDesired, this.th);
+            
+            % Update position and 
+            this.x = this.x + this.v * cos(this.th) * dT;
+            this.y = this.y + this.v * sin(this.th) * dT;
         end
         
         function val = get.pos(this)

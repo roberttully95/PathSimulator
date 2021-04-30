@@ -29,6 +29,9 @@ classdef (Abstract) Simulator < handle
         velocity        % The nominal velocity of the vehicles in the simulation.
         vehicleRadius   % The radius of the vehicle in meters.
         omegaMax        % The max turn rate of the vehicle in rads / s.
+        Kp              % Proportional heading control gain.
+        Ki              % Integral heading control gain.
+        Kd              % Derivative heading control gain.
         entryEdge       % The edge that the vehicles will enter from.
         exitEdge        % The edge that the vehicles will exit from.
         nVehicles       % The number of vehicles in the simulation
@@ -119,7 +122,7 @@ classdef (Abstract) Simulator < handle
             %dT, Kp, Ki, Kd, thDotMax
             
             % Get the controller
-            controller = HeadingController(this.dT, Inf, 0, 0, this.omegaMax);
+            controller = HeadingController(this.dT, this.Kp, this.Ki, this.Kd, this.omegaMax);
             
             % Create array of spawn times
             t0 = 0:(1/this.fSpawn):this.tEnd;
@@ -355,6 +358,18 @@ classdef (Abstract) Simulator < handle
             val = this.simData.properties.omegaMax;
         end
         
+        function val = get.Kp(this)
+            val = this.simData.properties.Kp;
+        end
+        
+        function val = get.Ki(this)
+            val = this.simData.properties.Ki;
+        end
+        
+        function val = get.Kd(this)
+            val = this.simData.properties.Kd;
+        end
+
         function val = get.nTriangles(this)
             val = size(this.triangles, 2);
         end
