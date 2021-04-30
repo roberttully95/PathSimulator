@@ -18,10 +18,9 @@ while ~pathsim.finished
 end
 
 % Initialize simulators.
-sim1 = ManualTriangle;
-Simulator(triangleJsonFile, plotMap);
-while ~sim1.finished
-    sim1.propogate();
-end
+%sim1 = ManualTriangleSimulator(triangleJsonFile, plotMap);
+%while ~sim1.finished
+%    sim1.propogate();
+%end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

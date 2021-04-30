@@ -6,9 +6,11 @@
     "deltaT": 0.1,
     "velocity": 0.1,
     "spawnFreq": 1,
-    "minimumTurnRadius": 1,
+    "vehicleRadius": 0.03,
     "omegaMax": 0.78539816339744828,
-    "maxBankAngle": 1.0471975511965976,
+    "Kp": Inf,
+    "Ki": 0,
+    "Kd": 0,
     "seed": 3.768277484E+9
   },
   "features": 

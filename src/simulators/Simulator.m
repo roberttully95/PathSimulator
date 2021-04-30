@@ -283,6 +283,16 @@ classdef (Abstract) Simulator < handle
                 idx2 = sub2ind(size(this.distances), list(:,2), list(:,1)); 
                 this.distances(idx1) = dists;
                 this.distances(idx2) = dists;
+                
+                % Check if distances are less than the min distance (Ra + Rb)
+                dMin = [this.vehicles(list(:, 1)).r]' + [this.vehicles(list(:, 2)).r]';
+                collided = list(dists < dMin, :);
+                
+                % Terminate collided vehicles
+                for i = 1:size(collided, 1)
+                    this.terminateVehicle(collided(i, 1));
+                    this.terminateVehicle(collided(i, 2));
+                end
             end
         end
         
@@ -298,7 +308,7 @@ classdef (Abstract) Simulator < handle
         function DUMP(this)
             TIME_DATA = [{'Time','NUM_ACTIVE_VEHICLES','AVERAGE_CLOSEST_DIST','AVERAGE_DIST'};...
                 num2cell(this.TIME), num2cell(this.NUM_ACTIVE_VEHICLES), num2cell(this.AVERAGE_CLOSEST_DIST), num2cell(this.AVERAGE_DIST)];
-            xlswrite(this.TIME_PATH, TIME_DATA)
+            writecell(TIME_DATA, this.TIME_PATH)
         end
         
     end

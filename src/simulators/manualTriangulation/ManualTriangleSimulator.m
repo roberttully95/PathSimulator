@@ -61,14 +61,18 @@ classdef ManualTriangleSimulator < Simulator
                     this.vehicles(i).active = true;
                 end
                 
-                % Propogate vehicle
-                this.vehicles(i).propogate(this.dT);
+                % Get the desired heading
+                triangle = this.triangles(this.vehicles(i).triangleIndex);
+                thDesired = atan2(triangle.dir(2), triangle.dir(1));
 
+                % Propogate vehicle
+                this.vehicles(i).propogate(this.dT, thDesired);
+                
                 % If it has changed triangles, update heading / velocity.
-                if ~this.triangles(this.vehicles(i).triangleIndex).containsPt(this.vehicles(i).pos)
+                if ~triangle.containsPt(this.vehicles(i).pos)
                     
                     % Get the next index
-                    next = this.triangles(this.vehicles(i).triangleIndex).nextIndex;
+                    next = triangle.nextIndex;
                     
                     % Check if at goal
                     if isnan(next)
@@ -95,10 +99,10 @@ classdef ManualTriangleSimulator < Simulator
                 this.DUMP();
                 return;
             end
-                        
+            
             % Update time
             this.t = this.t + this.dT;
-            this.pause(this.dT);
+            this.pause();
         end
         
     end
