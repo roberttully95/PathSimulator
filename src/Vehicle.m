@@ -14,6 +14,7 @@ classdef Vehicle < handle
         triangleIndex   % The index of the triangle within the triangles array that the vehicle is currently in.
         active          % Flag that determines if the vehicle is actively in the map.
         controller      % Defines the controller for the vehicle
+        distTravelled   % Stores the distance travelled by the vehicle
     end
     
     properties (Dependent)
@@ -35,6 +36,7 @@ classdef Vehicle < handle
             this.r = r;
             this.wMax = wMax;
             this.controller = controller;
+            this.distTravelled = 0;
         end
         
         function setInitialConditions(this, x0, y0, th0, v0, t0)
@@ -53,9 +55,9 @@ classdef Vehicle < handle
             % PROPOGATE Propogates the vehicle forward based on the current
             % position and velocity.
             
-            if abs(thDesired - this.th) > 0.01
-                disp('')
-            end
+            % Store previous position
+            xStore = this.x;
+            yStore = this.y;
             
             % Determine the actual heading using the controller
             this.th = this.th + this.controller.calculate(thDesired, this.th);
@@ -63,6 +65,9 @@ classdef Vehicle < handle
             % Update position and 
             this.x = this.x + this.v * cos(this.th) * dT;
             this.y = this.y + this.v * sin(this.th) * dT;
+            
+            % Update distance travelled
+            this.distTravelled = this.distTravelled + norm([xStore, yStore] - [this.x, this.y]);
         end
         
         function val = get.pos(this)

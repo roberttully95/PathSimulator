@@ -17,6 +17,8 @@ classdef (Abstract) Simulator < handle
         distances       % The distances between each vehicle (Lower Triangular Matrix)
         mapAxis         % The axis for plotting the map.
         dataAxis        % The map for plotting vehicle-level data.
+        
+        LOG_PATH                % Path to the current simulation's logging directory.
     end
     
     properties (Dependent)
@@ -43,15 +45,23 @@ classdef (Abstract) Simulator < handle
         finished        % Flag that contains the completion state of the simulation.
     end
     
-    % Logging
+    % Time Logging
     properties
-        LOG_PATH                % Path to the current simulation's logging directory.
         TIME_PATH               % Path to the current simulation's time spreadsheet.
-        EVENT_PATH              % Path to the curretn simulation's event spreadsheet.
         TIME                    % Records the simulation time
         NUM_ACTIVE_VEHICLES     % Records the number of active vehicles at each time step.
         AVERAGE_CLOSEST_DIST    % Records the average closest distance between adjacent vehicles
         AVERAGE_DIST            % Records the average distance between all vehicles
+    end
+    
+    % Vehicle Logging
+    properties 
+        VEHICLE_PATH            % Path to the current simulation's vehicle (event) spreadsheet.
+        END_CONDITION           % Stores the end condition for the vehicle (reached goal, collision etc.)
+        END_TIME                % Stores the time at which the end condition was achieved.
+        END_POSE                % Stores the vehicle pose at the time the end condition was achieved
+        DURATION                % Stores the amount of time the vehicle was active for
+        DIST_TRAVELLED          % Stores the distance travelled by the vehicle in the simulation
     end
     
     methods (Abstract)
@@ -80,7 +90,7 @@ classdef (Abstract) Simulator < handle
             % Create logging directorys
             this.LOG_PATH = strcat(cd, "\logs\",  filename);
             this.TIME_PATH = strcat(this.LOG_PATH, "\time.xls");
-            this.EVENT_PATH = strcat(this.LOG_PATH, "\event.xls");
+            this.VEHICLE_PATH = strcat(this.LOG_PATH, "\vehicles.xls");
             [~, ~, ~] = mkdir(this.LOG_PATH);
             
             % Read simulation data from input file.
@@ -90,6 +100,13 @@ classdef (Abstract) Simulator < handle
             if this.simData.type ~= this.type
                 error("Invalid map type being used.")
             end
+            
+            % Initialize vehicle file parameters
+            this.END_CONDITION = NaN(n, 1);
+            this.END_TIME = NaN(n, 1);
+            this.END_POSE = NaN(n, 3);
+            this.DURATION = NaN(n, 1);
+            this.DIST_TRAVELLED = NaN(n, 1);
             
             % Setup random number generator
             rng(this.seed, 'combRecursive');
@@ -243,14 +260,28 @@ classdef (Abstract) Simulator < handle
             end
         end
         
-        
-        function terminateVehicle(this, i)
+        function terminateVehicle(this, i, cond)
             %TERMINATEVEHICLE Terminates a vehicle.
-            this.vehicles(i).terminate(this.t); % set vehicle flags
+            
+            % Inform the vehicles that they are finished
+            this.vehicles(i).terminate(this.t);
+            
+            % Remove vehicles from the distance matrix
             this.distances(i, :) = NaN;
             this.distances(:, i) = NaN;
+            
+            % Log the vehicle info
+            this.END_CONDITION(i) = cond;
+            this.END_TIME(i) = this.vehicles(i).tEnd;
+            this.END_POSE(i, :) = this.vehicles(i).pose;
+            if this.vehicles(i).tEnd - this.vehicles(i).tInit < this.dT
+                this.DURATION(i) = 0;
+            else
+                this.DURATION(i) = this.vehicles(i).tEnd - this.vehicles(i).tInit;
+            end
+            this.DIST_TRAVELLED(i) = this.vehicles(i).distTravelled;
         end
-        
+                
         function updateDistances(this)
             %UPDATEDISTANCES Updates the distance matrix based on the current distance between all
             %vehicles.
@@ -297,27 +328,34 @@ classdef (Abstract) Simulator < handle
                 dMin = [this.vehicles(list(:, 1)).r]' + [this.vehicles(list(:, 2)).r]';
                 collided = list(dists < dMin, :);
                 
-                % Terminate collided vehicles
+                % Process collision if they occur.
                 for i = 1:size(collided, 1)
-                    this.terminateVehicle(collided(i, 1));
-                    this.terminateVehicle(collided(i, 2));
+                    this.terminateVehicle(collided(i, 1), 1)
+                    this.terminateVehicle(collided(i, 2), 1)
                 end
             end
         end
         
-        % Appends current data to the time logger.
         function TIMELOG(this)
+            %TIMELOG Appends current data to the time logger.
             this.TIME = [this.TIME; this.t];
             this.NUM_ACTIVE_VEHICLES = [this.NUM_ACTIVE_VEHICLES; this.nActiveVehicles];
             this.AVERAGE_CLOSEST_DIST = [this.AVERAGE_CLOSEST_DIST; this.avgClosestDist];
             this.AVERAGE_DIST = [this.AVERAGE_DIST; this.avgDist];
         end
         
-        % Writes data in logging parameters to the log files.
-        function DUMP(this)
+        function wrapUp(this)
+            %WRAPUP Wraps up the simulation
+                        
+            % Write the time log file
             TIME_DATA = [{'Time','NUM_ACTIVE_VEHICLES','AVERAGE_CLOSEST_DIST','AVERAGE_DIST'};...
                 num2cell(this.TIME), num2cell(this.NUM_ACTIVE_VEHICLES), num2cell(this.AVERAGE_CLOSEST_DIST), num2cell(this.AVERAGE_DIST)];
             writecell(TIME_DATA, this.TIME_PATH)
+                        
+            % Write the vehicle log file
+            VEHICLE_DATA = [{'Vehicle','END_CONDITION','END_TIME','DURATION', 'DIST_TRAVELLED'};...
+                num2cell((1:this.nVehicles)'), num2cell(this.END_CONDITION), num2cell(this.END_TIME), num2cell(this.DURATION), num2cell(this.DIST_TRAVELLED)];
+            writecell(VEHICLE_DATA, this.VEHICLE_PATH)          
         end
         
     end

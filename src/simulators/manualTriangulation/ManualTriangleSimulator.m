@@ -76,12 +76,21 @@ classdef ManualTriangleSimulator < Simulator
                     
                     % Check if at goal
                     if isnan(next)
-                        this.terminateVehicle(i);
+                        this.terminateVehicle(i, 0);
                     else
                         this.vehicles(i).triangleIndex = next;
                         dir = this.triangles(next).dir;
                         this.vehicles(i).th = atan2(dir(2), dir(1));
                     end
+                end
+                
+                % Process the case in which the vehicle has collided
+                % with the corridor.
+                pos = this.vehicles(i).pos;
+                dirEdge = this.triangles(this.vehicles(i).triangleIndex).directionEdge;
+                [d, ~] = distToLineSegment(dirEdge, pos);
+                if d < this.vehicles(i).r
+                    this.terminateVehicle(i, 2)
                 end
             end
             
@@ -96,7 +105,7 @@ classdef ManualTriangleSimulator < Simulator
             
             % If all the vehicles are finished, set flag.
             if this.finished
-                this.DUMP();
+                this.wrapUp();
                 return;
             end
             

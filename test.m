@@ -3,10 +3,10 @@
 %%%%%%%%%%%%%%%%%%%%%
 dT = 0.1;
 tMax = 40;
-Kp = 0.5;
+Kp = Inf;
 Ki = 0;
 Kd = 0;
-thDotMax = pi/12;
+thDotMax = pi/4;
 %%%%%%%%%%%%%%%%%%%%%
 hold on;
 

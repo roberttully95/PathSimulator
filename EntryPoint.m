@@ -8,7 +8,7 @@ triangleJsonFile = 'triangleTest1.json';
 pathJsonFile = 'curvedPath.json';
 
 % PARAMS
-plotMap = 1;
+plotMap = 0;
 
 % Path Simulator
 pathsim = SimulatorExample(pathJsonFile, plotMap);

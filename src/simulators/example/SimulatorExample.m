@@ -87,30 +87,28 @@ classdef SimulatorExample < Simulator
 
                         % Check if at goal
                         if isnan(next)
-                            this.terminateVehicle(i);
+                            this.terminateVehicle(i, 0);
                         else
                             this.vehicles(i).triangleIndex = next;
                         end
                     end
 
-                    % Terminate the vehicle if it is within collision
-                    % distance of the direction edge.
+                    % Process the case in which the vehicle has collided
+                    % with the corridor.
                     pos = this.vehicles(i).pos;
                     dirEdge = this.triangles(this.vehicles(i).triangleIndex).directionEdge;
                     [d, ~] = distToLineSegment(dirEdge, pos);
                     if d < this.vehicles(i).r
-                        this.terminateVehicle(i);
+                        this.terminateVehicle(i, 2)
                     end
                     
                 end
 
-                % Update 
-                
                 % Update vehicle-to-vehicle distance matrix. This function
                 % detects collisions that occur between vehicles and
                 % updates the distance matrix for non-collision vehicles.
                 this.updateDistances();
-
+                
                 % log new data
                 this.TIMELOG();
 
@@ -119,7 +117,7 @@ classdef SimulatorExample < Simulator
 
                 % If all the vehicles are finished, set flag.
                 if this.finished
-                    this.DUMP();
+                    this.wrapUp();
                     return;
                 end
 
