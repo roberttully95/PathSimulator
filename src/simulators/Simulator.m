@@ -119,8 +119,6 @@ classdef (Abstract) Simulator < handle
             %initialize the heading of the vehicles, however. The initialized heading is determined
             %by the triangulation method in the derived method.
             
-            %dT, Kp, Ki, Kd, thDotMax
-            
             % Get the controller
             controller = HeadingController(this.dT, this.Kp, this.Ki, this.Kd, this.omegaMax);
             
@@ -134,13 +132,24 @@ classdef (Abstract) Simulator < handle
             v1 = this.entryEdge(1, :);
             v2 = this.entryEdge(2, :);
             
+            % Length of entry edge
+            len = norm(v2 - v1);
+            
             % Direction of entry edge.
-            d = v2 - v1;
+            dNorm = (v2 - v1) / len;
+            
+            % determine 'r'  (proportion along the line the vehicle can 
+            % be initialized without instantly colliding with edge)
+            r = this.vehicleRadius / len;
+            
+            % Create random locations
+            randVals = r + (len - 2*r)*rand(n*1000, 1);
+            randLocs = v1 + randVals * dNorm;
             
             % Create vehicles array.
             this.vehicles = Vehicle.empty(0, n);
             for i = 1:n
-                pt = v1 + d * rand;
+                pt = randLocs(i, :);
                 this.vehicles(i) = Vehicle(pt(1), pt(2), 0, this.velocity, t0(i), this.vehicleRadius, this.omegaMax, controller);
             end
         end
