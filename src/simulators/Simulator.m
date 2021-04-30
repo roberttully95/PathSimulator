@@ -62,6 +62,7 @@ classdef (Abstract) Simulator < handle
         END_POSE                % Stores the vehicle pose at the time the end condition was achieved
         DURATION                % Stores the amount of time the vehicle was active for
         DIST_TRAVELLED          % Stores the distance travelled by the vehicle in the simulation
+        COLLIDED_WITH           % Stores the index of the vehicle collided with (if appropriate)
     end
     
     methods (Abstract)
@@ -102,11 +103,12 @@ classdef (Abstract) Simulator < handle
             end
             
             % Initialize vehicle file parameters
-            this.END_CONDITION = NaN(n, 1);
-            this.END_TIME = NaN(n, 1);
-            this.END_POSE = NaN(n, 3);
-            this.DURATION = NaN(n, 1);
-            this.DIST_TRAVELLED = NaN(n, 1);
+            this.END_CONDITION = NaN(this.nVehicles, 1);
+            this.END_TIME = NaN(this.nVehicles, 1);
+            this.END_POSE = NaN(this.nVehicles, 3);
+            this.DURATION = NaN(this.nVehicles, 1);
+            this.DIST_TRAVELLED = NaN(this.nVehicles, 1);
+            this.COLLIDED_WITH = NaN(this.nVehicles, 1);
             
             % Setup random number generator
             rng(this.seed, 'combRecursive');
@@ -260,7 +262,7 @@ classdef (Abstract) Simulator < handle
             end
         end
         
-        function terminateVehicle(this, i, cond)
+        function terminateVehicle(this, i, cond, coll)
             %TERMINATEVEHICLE Terminates a vehicle.
             
             % Inform the vehicles that they are finished
@@ -278,6 +280,11 @@ classdef (Abstract) Simulator < handle
                 this.DURATION(i) = 0;
             else
                 this.DURATION(i) = this.vehicles(i).tEnd - this.vehicles(i).tInit;
+            end
+            if cond == 1
+                this.COLLIDED_WITH(i) = coll;
+            else
+                this.COLLIDED_WITH(i) = 0;
             end
             this.DIST_TRAVELLED(i) = this.vehicles(i).distTravelled;
         end
@@ -330,8 +337,9 @@ classdef (Abstract) Simulator < handle
                 
                 % Process collision if they occur.
                 for i = 1:size(collided, 1)
-                    this.terminateVehicle(collided(i, 1), 1)
-                    this.terminateVehicle(collided(i, 2), 1)
+                    this.terminateVehicle(collided(i, 1), 1, collided(i, 2))
+                    this.terminateVehicle(collided(i, 2), 1, collided(i, 1))
+                    
                 end
             end
         end
@@ -353,8 +361,8 @@ classdef (Abstract) Simulator < handle
             writecell(TIME_DATA, this.TIME_PATH)
                         
             % Write the vehicle log file
-            VEHICLE_DATA = [{'Vehicle','END_CONDITION','END_TIME','DURATION', 'DIST_TRAVELLED'};...
-                num2cell((1:this.nVehicles)'), num2cell(this.END_CONDITION), num2cell(this.END_TIME), num2cell(this.DURATION), num2cell(this.DIST_TRAVELLED)];
+            VEHICLE_DATA = [{'Vehicle','END_CONDITION','END_TIME','DURATION', 'DIST_TRAVELLED', 'COLLIDED_WITH'};...
+                num2cell((1:this.nVehicles)'), num2cell(this.END_CONDITION), num2cell(this.END_TIME), num2cell(this.DURATION), num2cell(this.DIST_TRAVELLED), num2cell(this.COLLIDED_WITH)];
             writecell(VEHICLE_DATA, this.VEHICLE_PATH)          
         end
         
