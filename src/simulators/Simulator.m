@@ -15,6 +15,7 @@ classdef (Abstract) Simulator < handle
         plotMode        % Determines now the data will be plotted.
         handle          % The handle for plotting vehicle objects
         distances       % The distances between each vehicle (Lower Triangular Matrix)
+        collDists       % The collision distances between any two vehicles
         mapAxis         % The axis for plotting the map.
         dataAxis        % The map for plotting vehicle-level data.
         
@@ -124,6 +125,14 @@ classdef (Abstract) Simulator < handle
             
             % Initialize distances
             this.distances = NaN(this.nVehicles, this.nVehicles);
+            
+            % Initialize collision distances
+            this.collDists = NaN(this.nVehicles, this.nVehicles);
+            for i = 1:this.nVehicles
+                for j = 1:this.nVehicles
+                    this.collDists(i, j) = this.vehicles(i).r + this.vehicles(j).r;
+                end
+            end
             
             % Set params
             this.t = 0;
@@ -333,17 +342,6 @@ classdef (Abstract) Simulator < handle
                 idx2 = sub2ind(size(this.distances), list(:,2), list(:,1)); 
                 this.distances(idx1) = dists;
                 this.distances(idx2) = dists;
-                
-                % Check if distances are less than the min distance (Ra + Rb)
-                dMin = [vehiclesTemp(list(:, 1)).r]' + [vehiclesTemp(list(:, 2)).r]';
-                collided = list(dists < dMin, :);
-                
-                % Process collision if they occur.
-                for i = 1:size(collided, 1)
-                    this.terminateVehicle(collided(i, 1), 1, collided(i, 2))
-                    this.terminateVehicle(collided(i, 2), 1, collided(i, 1))
-                    
-                end
             end
         end
         

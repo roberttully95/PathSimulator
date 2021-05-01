@@ -45,22 +45,55 @@ classdef ClosestTriangulationSimulator < Simulator
             % PROPOGATE Propogates the simulation by 'dT' seconds.
             
             if ~this.finished
-                % Iterate through vehicles.
+                
+                % TODO: Activate vehicles at the current time step
+                % TODO: Get list of valid vehicles at this point
+                % TODO: Terminate vehicles in a collision state
+                % TODO: Iterate through the remaining vehicles
+                
+                % Iterate through all vehicles.
                 for i = 1:this.nVehicles
 
-                    % If finished has finished crossing the map
+                    % All checks must be done before the propogation step. 
+                    
+                    % CHECK 1: Vehicle is finished
                     if this.vehicles(i).finished
                         continue;
                     end
 
-                    % If the vehicle has not yet started crossing the map.
+                    % CHECK 2: Vehicle has not yet started
                     if this.t < this.vehicles(i).tInit
                         continue;
                     end
 
-                    % If vehicle has just been initialized within the map in the last time step.
+                    % CHECK 3: Vehicle has just been initialized
                     if this.t - this.dT < this.vehicles(i).tInit && this.t >= this.vehicles(i).tInit
                         this.vehicles(i).active = true;
+                        continue;
+                    end
+
+                    % CHECK 4: Vehicle is inside map
+                    if isnan(this.vehicles(i).triangleIndex)
+                        this.terminateVehicle(i, 0);
+                        continue;
+                    end
+                    
+                    % CHECK 4: Vehicle - corridor collision check.
+                    pos = this.vehicles(i).pos;
+                    dirEdge = this.triangles(this.vehicles(i).triangleIndex).directionEdge;
+                    [d, ~] = distToLineSegment(dirEdge, pos);
+                    if d < this.vehicles(i).r
+                        this.terminateVehicle(i, 2);
+                        continue;
+                    end
+                    
+                    % CHECK 5: Vehicle - vehicle collision check.
+                    collision = find(this.distances(i, :) < this.collDists(i, :) == 1);
+                    if size(collision, 2) > 0
+                        this.terminateVehicle(i, 2, collision(1));
+                        for j = 1:size(collision, 2)
+                            this.terminateVehicle(collision(j), 2, i);
+                        end
                     end
 
                     % Get the desired heading
@@ -69,30 +102,12 @@ classdef ClosestTriangulationSimulator < Simulator
                     
                     % Propogate vehicle
                     this.vehicles(i).propogate(this.dT, thDesired);
-
+                    
                     % If it has changed triangles, update triangle.
                     if ~triangle.containsPt(this.vehicles(i).pos)
-
-                        % Get the next index
-                        next = triangle.nextIndex;
-
-                        % Check if at goal
-                        if isnan(next)
-                            this.terminateVehicle(i, 0);
-                        else
-                            this.vehicles(i).triangleIndex = next;
-                        end
+                        this.vehicles(i).triangleIndex = triangle.nextIndex;
                     end
 
-                    % Process the case in which the vehicle has collided
-                    % with the corridor.
-                    pos = this.vehicles(i).pos;
-                    dirEdge = this.triangles(this.vehicles(i).triangleIndex).directionEdge;
-                    [d, ~] = distToLineSegment(dirEdge, pos);
-                    if d < this.vehicles(i).r
-                        this.terminateVehicle(i, 2)
-                    end
-                    
                 end
 
                 % Update vehicle-to-vehicle distance matrix. This function
