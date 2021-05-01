@@ -8,7 +8,7 @@ triangleJsonFile = 'triangleTest1.json';
 pathJsonFile = 'curvedPath.json';
 
 % PARAMS
-plotMap = 0;
+plotMap = 1;
 
 % Path Simulator
 pathsim = ClosestTriangulationSimulator(pathJsonFile, plotMap);
