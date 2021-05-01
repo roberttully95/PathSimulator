@@ -353,14 +353,14 @@ classdef (Abstract) Simulator < handle
             this.AVERAGE_DIST = [this.AVERAGE_DIST; this.avgDist];
         end
         
-        function wrapUp(this)
+        function writeLogFiles(this)
             %WRAPUP Wraps up the simulation
-                        
+            
             % Write the time log file
             TIME_DATA = [{'Time','NUM_ACTIVE_VEHICLES','AVERAGE_CLOSEST_DIST','AVERAGE_DIST'};...
                 num2cell(this.TIME), num2cell(this.NUM_ACTIVE_VEHICLES), num2cell(this.AVERAGE_CLOSEST_DIST), num2cell(this.AVERAGE_DIST)];
             writecell(TIME_DATA, this.TIME_PATH)
-                        
+            
             % Write the vehicle log file
             VEHICLE_DATA = [{'Vehicle','END_CONDITION','END_TIME','DURATION', 'DIST_TRAVELLED', 'COLLIDED_WITH'};...
                 num2cell((1:this.nVehicles)'), num2cell(this.END_CONDITION), num2cell(this.END_TIME), num2cell(this.DURATION), num2cell(this.DIST_TRAVELLED), num2cell(this.COLLIDED_WITH)];

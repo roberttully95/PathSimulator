@@ -7,15 +7,19 @@ addpath(genpath("src"))
 triangleJsonFile = 'triangleTest1.json';
 pathJsonFile = 'curvedPath.json';
 
-% PARAMS
+% Paramts
 plotMap = 0;
+simSpeedup = 10;
 
 % Path Simulator
 pathsim = ClosestTriangulationSimulator(pathJsonFile, plotMap);
-pathsim.speedup = 10;
+pathsim.speedup = simSpeedup;
 while ~pathsim.finished
     pathsim.propogate();
 end
+pathsim.writeLogFiles();
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Initialize simulators.
 %sim1 = ManualTriangleSimulator(triangleJsonFile, plotMap);
