@@ -11,7 +11,7 @@ pathJsonFile = 'curvedPath.json';
 plotMap = 0;
 
 % Path Simulator
-pathsim = SimulatorExample(pathJsonFile, plotMap);
+pathsim = ClosestTriangulationSimulator(pathJsonFile, plotMap);
 pathsim.speedup = 10;
 while ~pathsim.finished
     pathsim.propogate();

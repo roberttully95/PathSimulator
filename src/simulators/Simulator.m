@@ -310,9 +310,12 @@ classdef (Abstract) Simulator < handle
             % Get dists
             if ~isempty(list)
                 
+                % Faster to extract out
+                vehiclesTemp = this.vehicles;
+                
                 % Get locations
-                src = [[this.vehicles(list(:, 1)).x]; [this.vehicles(list(:, 1)).y]]';
-                dst = [[this.vehicles(list(:, 2)).x]; [this.vehicles(list(:, 2)).y]]';
+                src = [[vehiclesTemp(list(:, 1)).x]; [vehiclesTemp(list(:, 1)).y]]';
+                dst = [[vehiclesTemp(list(:, 2)).x]; [vehiclesTemp(list(:, 2)).y]]';
 
                 % Calculate dist
                 dists = src - dst;
@@ -325,7 +328,7 @@ classdef (Abstract) Simulator < handle
                 this.distances(idx2) = dists;
                 
                 % Check if distances are less than the min distance (Ra + Rb)
-                dMin = [this.vehicles(list(:, 1)).r]' + [this.vehicles(list(:, 2)).r]';
+                dMin = [vehiclesTemp(list(:, 1)).r]' + [vehiclesTemp(list(:, 2)).r]';
                 collided = list(dists < dMin, :);
                 
                 % Process collision if they occur.
