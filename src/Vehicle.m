@@ -32,7 +32,7 @@ classdef Vehicle < handle
             this.setInitialConditions(x0, y0, th0, v0, t0);
             this.tEnd = Inf;
             this.triangleIndex = 1;
-            this.active = (this.tInit == 0);
+            this.active = (t0 == 0);
             this.r = r;
             this.wMax = wMax;
             this.controller = controller;

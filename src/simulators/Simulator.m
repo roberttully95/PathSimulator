@@ -156,30 +156,56 @@ classdef (Abstract) Simulator < handle
             % Determine number of vehicles to be created.
             n = length(t0);
             
+            % Create vehicles array.
+            this.vehicles = Vehicle.empty(0, n);
+            
+            for i = 1:n
+                this.vehicles(i) = Vehicle(NaN, NaN, NaN, this.velocity, t0(i), this.vehicleRadius, this.omegaMax, controller);
+            end
+        end
+        
+        function initVehicle(this, i)
+            %INITVEHICLE Initializes a vehicle to a deconflicted state.
+            
+            % Get the current vehicle positions
+            pos = reshape([this.vehicles(:).pos], 2, this.nVehicles)';
+            
             % Direction of entry edge.
             v1 = this.entryEdge(1, :);
             v2 = this.entryEdge(2, :);
-            
-            % Length of entry edge
-            len = norm(v2 - v1);
-            
-            % Direction of entry edge.
-            dNorm = (v2 - v1) / len;
-            
-            % determine 'r'  (proportion along the line the vehicle can 
-            % be initialized without instantly colliding with edge)
-            r = this.vehicleRadius / len;
-            
-            % Create random locations
-            randVals = r + (len - 2*r)*rand(n*1000, 1);
-            randLocs = v1 + randVals * dNorm;
-            
-            % Create vehicles array.
-            this.vehicles = Vehicle.empty(0, n);
-            for i = 1:n
-                pt = randLocs(i, :);
-                this.vehicles(i) = Vehicle(pt(1), pt(2), 0, this.velocity, t0(i), this.vehicleRadius, this.omegaMax, controller);
+                        
+            % Init
+            validLocation = false;
+            while ~validLocation
+                
+                % Create random number
+                r = rand;
+                
+                % Generate point
+                pt = v1 + r * (v2 - v1);
+                
+                % Ensure it is not collided with walls
+                if norm(pt - v1) < this.vehicleRadius || norm(pt - v2) < this.vehicleRadius
+                    continue;
+                end
+                
+                % Ensure it is not collided with existing vehicle
+                dists = sqrt((pos(:, 1) - pt(1)).^2 + (pos(:, 2) - pt(2)).^2);
+                if any(dists < 2 * this.vehicleRadius)
+                    continue;
+                end
+                
+                % At this point, it is valid
+                validLocation = true;
             end
+            
+            % Assign
+            this.vehicles(i).x = pt(1);
+            this.vehicles(i).y = pt(2);
+            this.vehicles(i).active = true;
+            
+            % NOTE: Cannot assign the vehicle heading until the
+            % triangulation has been performed.
         end
         
         function initPlot(this)
@@ -243,7 +269,7 @@ classdef (Abstract) Simulator < handle
                 end
             end
         end
-
+        
         function pause(this)
             % PAUSE Pauses the simulation for a specified time.
             if this.hasAxis
@@ -298,6 +324,44 @@ classdef (Abstract) Simulator < handle
             this.DIST_TRAVELLED(i) = this.vehicles(i).distTravelled;
         end
                 
+        function postPropogationUpdate(this)
+            %POSTPROPOGATIONUPDATE After all vehicles have been propogated,
+            %call this function to check for collisions that occurred
+            %during the propogating step and to update the distance matrix.
+            
+            % Step 1: Terminate vehicles that reached goal during the last
+            % time step.
+            active = this.activeVehicles;
+            iEnded = find(isnan([this.vehicles(active).triangleIndex]));
+            for i = 1:size(iEnded, 2)
+                this.terminateVehicle(active(iEnded(i)), 0);
+            end
+            
+            % Step 2: Terminate vehicles that collided with the wall.
+            active = this.activeVehicles;
+            positions  = reshape([this.vehicles(active).pos], 2, this.nActiveVehicles)';
+            for i = 1:size(positions, 1)
+                dirEdge = [this.triangles(this.vehicles(active(i)).triangleIndex).directionEdge];
+                [d, ~] = distToLineSegment(dirEdge, positions(i, :));
+                if d < this.vehicles(active(i)).r
+                    this.terminateVehicle(active(i), 2);
+                end
+            end
+            
+            % Step 3: Terminate vehicles that collided with each other and
+            % update distance matrix
+            this.updateDistances();
+            
+            % Step 4: Initialize vehicle before the next time step begins
+            iInit = find(abs(this.t - [this.vehicles(:).tInit]) < 0.1 * this.dT);
+            for i = 1:length(iInit)
+                this.initVehicle(iInit(i));
+            end
+            
+            % Step 5: Log time data
+            this.TIMELOG();
+        end
+        
         function updateDistances(this)
             %UPDATEDISTANCES Updates the distance matrix based on the current distance between all
             %vehicles.
@@ -342,6 +406,16 @@ classdef (Abstract) Simulator < handle
                 idx2 = sub2ind(size(this.distances), list(:,2), list(:,1)); 
                 this.distances(idx1) = dists;
                 this.distances(idx2) = dists;
+                
+                % Check if distances are less than the min distance (Ra + Rb)
+                dMin = [vehiclesTemp(list(:, 1)).r]' + [vehiclesTemp(list(:, 2)).r]';
+                collided = list(dists < dMin, :);
+                
+                % Process collision if they occur.
+                for i = 1:size(collided, 1)
+                    this.terminateVehicle(collided(i, 1), 1, collided(i, 2))
+                    this.terminateVehicle(collided(i, 2), 1, collided(i, 1))
+                end
             end
         end
         

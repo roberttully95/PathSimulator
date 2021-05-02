@@ -21,8 +21,11 @@ classdef ClosestTriangulationSimulator < Simulator
             % Read the input.
             this.init(varargs_);
 
-            % triangulate
+            % Define the triangulation
             this.triangulate();
+            
+            % Initialize the first vehicle.
+            this.initVehicle(1);
             
             % Plot triangles
             this.plotTriangles();
@@ -44,80 +47,33 @@ classdef ClosestTriangulationSimulator < Simulator
         function propogate(this)
             % PROPOGATE Propogates the simulation by 'dT' seconds.
             
-            % Iterate through all vehicles.
-            for i = 1:this.nVehicles
-                % All checks must be done before the propogation step. 
+            % Propogate
+            for j = 1:this.nActiveVehicles
+                i = this.activeVehicles(j);
                 
-                % CHECK 1: Vehicle is finished
-                if this.vehicles(i).finished
-                    continue;
-                end
-                
-                % CHECK 2: Vehicle has not yet started
-                if this.t < this.vehicles(i).tInit
-                    continue;
-                end
-                
-                % CHECK 3: Vehicle has just been initialized
-                if this.t - this.dT < this.vehicles(i).tInit && this.t >= this.vehicles(i).tInit
-                    this.vehicles(i).active = true;
-                    continue;
-                end
-                
-                % CHECK 4: Vehicle is inside map
-                if isnan(this.vehicles(i).triangleIndex)
-                    this.terminateVehicle(i, 0);
-                    continue;
-                end
-                
-                % CHECK 5: Vehicle - corridor collision check.
-                pos = this.vehicles(i).pos;
-                dirEdge = this.triangles(this.vehicles(i).triangleIndex).directionEdge;
-                [d, ~] = distToLineSegment(dirEdge, pos);
-                if d < this.vehicles(i).r
-                    this.terminateVehicle(i, 2);
-                    continue;
-                end
-                
-                %TODO Move v2v collision to before the simulation
-                %TODO Start vehicles dynamically
-                
-                % CHECK 6: Vehicle - vehicle collision check.
-                collision = find(this.distances(i, :) < this.collDists(i, :) == 1);
-                if size(collision, 2) > 0
-                    this.terminateVehicle(i, 1, collision(1));
-                    %for j = 1:size(collision, 2)
-                    %    this.terminateVehicle(collision(j), 1, i);
-                    %end
-                    continue;
-                end
-                
-                % Get the desired heading
+                % Get desired heading
                 triangle = this.triangles(this.vehicles(i).triangleIndex);
                 thDesired = atan2(triangle.dir(2), triangle.dir(1));
                 
                 % Propogate vehicle
                 this.vehicles(i).propogate(this.dT, thDesired);
                 
-                % If it has changed triangles, update triangle.
+                % Update triangle
                 if ~triangle.containsPt(this.vehicles(i).pos)
                     this.vehicles(i).triangleIndex = triangle.nextIndex;
                 end
+
             end
-            
-            % Update vehicle-to-vehicle distance matrix. This needs to be
-            % done after ALL vehicles have been propogated.
-            this.updateDistances();
-            
-            % Single call to 'scatter' to plot all points
-            this.plotVehicles();
-            
-            % Update time
             this.t = this.t + this.dT;
             this.pause();
             
-            % Log time data
-            this.TIMELOG();
+            %%%%%%%%%%%%%
+            % POSTCHECK %
+            %%%%%%%%%%%%%
+            this.postPropogationUpdate();
+            
+            % Plot vehicles in their new state
+            this.plotVehicles();
         end
     end
     
