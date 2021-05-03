@@ -2,9 +2,9 @@
   "type": "Paths",
   "properties": 
   {
-    "nVehicles": 1000,
+    "nVehicles": 50,
     "deltaT": 0.1,
-    "velocity": 5,
+    "velocity": 18,
     "spawnFreq": 1,
     "vehicleRadius": 1,
     "omegaMax": 1.57,

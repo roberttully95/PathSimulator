@@ -62,7 +62,6 @@ classdef ClosestTriangulationSimulator < Simulator
                 if ~triangle.containsPt(this.vehicles(i).pos)
                     this.vehicles(i).triangleIndex = triangle.nextIndex;
                 end
-
             end
             this.t = this.t + this.dT;
             this.pause();

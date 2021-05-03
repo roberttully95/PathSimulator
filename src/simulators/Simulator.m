@@ -212,41 +212,43 @@ classdef (Abstract) Simulator < handle
             %INITPLOT Plots both bounding paths for the region along with edges joining the start
             %and end vertices of the paths.
             
-            if this.hasAxis
-                
-                % Initialize plot map.
-                fig = figure(1);
-                this.mapAxis = axes(fig);
-
-                % Setup axis
-                cla(this.mapAxis);
-                this.mapAxis.DataAspectRatio = [1, 1, 1];
-                hold(this.mapAxis , 'on');
-
-                % Plot the paths
-                this.path1.plot(this.mapAxis, 'b');
-                this.path2.plot(this.mapAxis, 'b');
-
-                % Plot the entry and exit lines.
-                plot(this.mapAxis, this.entryEdge(:, 1), this.entryEdge(:, 2), 'g', 'LineWidth', 1.5)
-                plot(this.mapAxis, this.exitEdge(:, 1), this.exitEdge(:, 2), 'r', 'LineWidth', 1.5)
-
-                % Plot the vertices along the paths
-                scatter(this.mapAxis, this.path1.x, this.path1.y, 'r');
-                scatter(this.mapAxis, this.path2.x, this.path2.y, 'r');
-
-                % Label Axes
-                xlabel(this.mapAxis, "x");
-                ylabel(this.mapAxis, "y");
-                title(this.mapAxis, "Map Region")
-                
-                % Set data axis
-                if this.plotMode == 2
-                    fig = figure(2);
-                    this.dataAxis = axes(fig);
-                end
-                
+            if ~this.hasAxis
+                return;
             end
+            
+            % Initialize plot map.
+            fig = figure(1);
+            this.mapAxis = axes(fig);
+
+            % Setup axis
+            cla(this.mapAxis);
+            %this.mapAxis.DataAspectRatio = [1, 1, 1];
+            hold(this.mapAxis , 'on');
+            axis(this.mapAxis, 'equal');
+            
+            % Plot the paths
+            this.path1.plot(this.mapAxis, 'b');
+            this.path2.plot(this.mapAxis, 'b');
+
+            % Plot the entry and exit lines.
+            plot(this.mapAxis, this.entryEdge(:, 1), this.entryEdge(:, 2), 'g', 'LineWidth', 1.5)
+            plot(this.mapAxis, this.exitEdge(:, 1), this.exitEdge(:, 2), 'r', 'LineWidth', 1.5)
+
+            % Plot the vertices along the paths
+            scatter(this.mapAxis, this.path1.x, this.path1.y, 'r');
+            scatter(this.mapAxis, this.path2.x, this.path2.y, 'r');
+
+            % Label Axes
+            xlabel(this.mapAxis, "x");
+            ylabel(this.mapAxis, "y");
+            title(this.mapAxis, "Map Region")
+
+            % Set data axis
+            if this.plotMode == 2
+                fig = figure(2);
+                this.dataAxis = axes(fig);
+            end
+            
         end
         
         function plotTriangles(this)
@@ -260,10 +262,10 @@ classdef (Abstract) Simulator < handle
 
                     % Get centroid
                     v = tri.centroid;
-
+                    
                     % Get length 
                     len = (1/6) * tri.dirLength;
-
+                    
                     % Plot arrows
                     arrows(this.mapAxis, v(1), v(2), len, 90 - atan2(tri.dir(2), tri.dir(1)) * (180 / pi))
                 end

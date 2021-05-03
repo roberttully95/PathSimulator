@@ -5,10 +5,10 @@ addpath(genpath("src"))
 
 % Specify file location
 %triangleJsonFile = 'triangleTest1.json';
-pathJsonFile = 'corridor.json';
+pathJsonFile = 'curvedPath.json';
 
 % Parameters
-plotMap = 0;
+plotMap = 1;
 simSpeedup = 10;
 
 % Path Simulator
@@ -20,7 +20,7 @@ end
 pathsim.writeLogFiles();
 
 % Send email
-sendEmail('files/login.ini', 'Simulation Finished', 'The simulation has finished succsefully');
+%sendEmail('files/login.ini', 'Simulation Finished', 'The simulation has finished succsefully');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
