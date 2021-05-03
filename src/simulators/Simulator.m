@@ -15,11 +15,10 @@ classdef (Abstract) Simulator < handle
         plotMode        % Determines now the data will be plotted.
         handle          % The handle for plotting vehicle objects
         distances       % The distances between each vehicle (Lower Triangular Matrix)
-        collDists       % The collision distances between any two vehicles
         mapAxis         % The axis for plotting the map.
         dataAxis        % The map for plotting vehicle-level data.
-        
-        LOG_PATH                % Path to the current simulation's logging directory.
+
+        LOG_PATH        % Path to the current simulation's logging directory.
     end
     
     properties (Dependent)
@@ -27,7 +26,6 @@ classdef (Abstract) Simulator < handle
         path1           % The first bounding path.
         path2           % The second bounding path. 
         tEnd            % The latest time that a vehicle can be spawned.
-        fSpawn          % The frequency at which vehicles are spawned into the map.
         seed            % The random number seed that allows for reproducability of simulations.
         velocity        % The nominal velocity of the vehicles in the simulation.
         vehicleRadius   % The radius of the vehicle in meters.
@@ -43,6 +41,7 @@ classdef (Abstract) Simulator < handle
         nActiveVehicles % The number of active vehicles in the map.
         avgClosestDist  % Returns the average closest distance between adjacent vehicles.
         avgDist         % Returns the average distance between all vehicles.
+        separationDist  % The separation distance that the files must maintain
         finished        % Flag that contains the completion state of the simulation.
     end
     
@@ -126,14 +125,6 @@ classdef (Abstract) Simulator < handle
             % Initialize distances
             this.distances = NaN(this.nVehicles, this.nVehicles);
             
-            % Initialize collision distances
-            this.collDists = NaN(this.nVehicles, this.nVehicles);
-            for i = 1:this.nVehicles
-                for j = 1:this.nVehicles
-                    this.collDists(i, j) = this.vehicles(i).r + this.vehicles(j).r;
-                end
-            end
-            
             % Set params
             this.t = 0;
             this.speedup = 1;
@@ -147,20 +138,10 @@ classdef (Abstract) Simulator < handle
             %initialize the heading of the vehicles, however. The initialized heading is determined
             %by the triangulation method in the derived method.
             
-            % Get the controller
-            controller = HeadingController(this.dT, this.Kp, this.Ki, this.Kd, this.omegaMax);
-            
-            % Create array of spawn times
-            t0 = 0:(1/this.fSpawn):this.tEnd;
-            
-            % Determine number of vehicles to be created.
-            n = length(t0);
-            
             % Create vehicles array.
-            this.vehicles = Vehicle.empty(0, n);
-            
-            for i = 1:n
-                this.vehicles(i) = Vehicle(NaN, NaN, NaN, this.velocity, t0(i), this.vehicleRadius, this.omegaMax, controller);
+            this.vehicles = Vehicle.empty(0, this.nVehicles);
+            for i = 1:this.nVehicles
+                this.vehicles(i) = Vehicle(NaN, NaN, NaN, this.velocity, 0, this.separationDist / 2, this.omegaMax);
             end
         end
         
@@ -170,33 +151,50 @@ classdef (Abstract) Simulator < handle
             % Get the current vehicle positions
             pos = reshape([this.vehicles(:).pos], 2, this.nVehicles)';
             
-            % Direction of entry edge.
-            v1 = this.entryEdge(1, :);
-            v2 = this.entryEdge(2, :);
-                        
+            % Get the bounds
+            xMin = min([this.path1.x; this.path2.x]);
+            xMax = max([this.path1.x; this.path2.x]);
+            yMin = min([this.path1.y; this.path2.y]);
+            yMax = max([this.path1.y; this.path2.y]);
+              
+            % Init polygon shape
+            poly = polyshape([this.path1.x; flipud(this.path2.x)], [this.path1.y; flipud(this.path2.y)]);
+            
             % Init
+            k = 1;
             validLocation = false;
             while ~validLocation
+                if k == 1000000
+                    error("Cannot fit specified number of vehicle on the map!");
+                end
                 
-                % Create random number
-                r = rand;
+                % Create random coordinate
+                xR = xMin + rand * (xMax - xMin);
+                yR = yMin + rand * (yMax - yMin);
                 
                 % Generate point
-                pt = v1 + r * (v2 - v1);
+                pt = [xR, yR];
                 
-                % Ensure it is not collided with walls
-                if norm(pt - v1) < this.vehicleRadius || norm(pt - v2) < this.vehicleRadius
+                % Ensure the point is located within the polygon
+                if ~isinterior(poly, xR, yR)
+                    k = k + 1;
                     continue;
                 end
                 
-                % Ensure it is not collided with existing vehicle
+                % Ensure it is between rColl and 3rColl away from another
+                % vehicle
                 dists = sqrt((pos(:, 1) - pt(1)).^2 + (pos(:, 2) - pt(2)).^2);
-                if any(dists < 2 * this.vehicleRadius)
+                if any(dists < this.separationDist )
+                    k = k + 1;
+                    continue;
+                elseif all(dists > 2*this.separationDist)
+                    k = k + 1;
                     continue;
                 end
                 
                 % At this point, it is valid
                 validLocation = true;
+                k = 1;
             end
             
             % Assign
@@ -339,28 +337,17 @@ classdef (Abstract) Simulator < handle
                 this.terminateVehicle(active(iEnded(i)), 0);
             end
             
-            % Step 2: Terminate vehicles that collided with the wall.
-            active = this.activeVehicles;
-            positions  = reshape([this.vehicles(active).pos], 2, this.nActiveVehicles)';
-            for i = 1:size(positions, 1)
-                dirEdge = [this.triangles(this.vehicles(active(i)).triangleIndex).directionEdge];
-                [d, ~] = distToLineSegment(dirEdge, positions(i, :));
-                if d < this.vehicles(active(i)).r
-                    this.terminateVehicle(active(i), 2);
-                end
-            end
-            
-            % Step 3: Terminate vehicles that collided with each other and
+            % Step 2: Terminate vehicles that collided with each other and
             % update distance matrix
             this.updateDistances();
             
-            % Step 4: Initialize vehicle before the next time step begins
+            % Step 3: Initialize vehicle before the next time step begins
             iInit = find(abs(this.t - [this.vehicles(:).tInit]) < 0.1 * this.dT);
             for i = 1:length(iInit)
                 this.initVehicle(iInit(i));
             end
             
-            % Step 5: Log time data
+            % Step 4: Log time data
             this.TIMELOG();
         end
         
@@ -410,8 +397,7 @@ classdef (Abstract) Simulator < handle
                 this.distances(idx2) = dists;
                 
                 % Check if distances are less than the min distance (Ra + Rb)
-                dMin = [vehiclesTemp(list(:, 1)).r]' + [vehiclesTemp(list(:, 2)).r]';
-                collided = list(dists < dMin, :);
+                collided = list(dists < this.separationDist, :);
                 
                 % Process collision if they occur.
                 for i = 1:size(collided, 1)
@@ -463,11 +449,7 @@ classdef (Abstract) Simulator < handle
         function val = get.dT(this)
             val = this.simData.properties.deltaT;
         end
-        
-        function val = get.fSpawn(this)
-            val = this.simData.properties.spawnFreq;
-        end
-        
+
         function val = get.tEnd(this)
             val = (this.nVehicles - 1)/this.fSpawn;
         end 
@@ -530,6 +512,10 @@ classdef (Abstract) Simulator < handle
         
         function val = get.avgDist(this)
             val = mean(this.distances, 'all', 'omitnan');
+        end
+        
+        function val = get.separationDist(this)
+            val = this.simData.properties.separationDist;
         end
         
         function val = get.finished(this)

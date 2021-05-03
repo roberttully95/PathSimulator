@@ -25,7 +25,9 @@ classdef ClosestTriangulationSimulator < Simulator
             this.triangulate();
             
             % Initialize the first vehicle.
-            this.initVehicle(1);
+            for i = 1:this.nVehicles
+                this.initVehicle(i);
+            end
             
             % Plot triangles
             this.plotTriangles();

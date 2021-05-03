@@ -13,7 +13,6 @@ classdef Vehicle < handle
         finished        % Flag that determines if the vehicle has exited the 'map'.
         triangleIndex   % The index of the triangle within the triangles array that the vehicle is currently in.
         active          % Flag that determines if the vehicle is actively in the map.
-        controller      % Defines the controller for the vehicle
         distTravelled   % Stores the distance travelled by the vehicle
     end
     
@@ -27,7 +26,7 @@ classdef Vehicle < handle
     
     methods
         
-        function this = Vehicle(x0, y0, th0, v0, t0, r, wMax, controller)
+        function this = Vehicle(x0, y0, th0, v0, t0, r, wMax)
             % VEHICLE2D Constructor taking initial conditions
             this.setInitialConditions(x0, y0, th0, v0, t0);
             this.tEnd = Inf;
@@ -35,7 +34,6 @@ classdef Vehicle < handle
             this.active = (t0 == 0);
             this.r = r;
             this.wMax = wMax;
-            this.controller = controller;
             this.distTravelled = 0;
         end
         
@@ -59,8 +57,8 @@ classdef Vehicle < handle
             xStore = this.x;
             yStore = this.y;
             
-            % Determine the actual heading using the controller
-            this.th = this.th + this.controller.calculate(thDesired, this.th);
+            % Update heading
+            this.th = thDesired;
             
             % Update position and 
             this.x = this.x + this.v * cos(this.th) * dT;
