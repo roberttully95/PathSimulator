@@ -87,7 +87,7 @@ classdef (Abstract) Simulator < handle
             
             % Set file
             [~, filename, fileext] = fileparts(args{1});
-            this.file = strcat(cd, '\data\', filename, fileext);
+            this.file = strcat(cd, '\files\', filename, fileext);
             
             % Create logging directorys
             this.LOG_PATH = strcat(cd, "\logs\",  filename);

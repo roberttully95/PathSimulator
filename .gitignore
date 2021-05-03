@@ -2,5 +2,6 @@
 logs/
 images/
 
-# Ignore .asv files
+# Ignore .asv and .ini files
 *.asv
+*.ini

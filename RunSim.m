@@ -4,12 +4,12 @@ addpath(genpath("src"))
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Specify file location
-triangleJsonFile = 'triangleTest1.json';
-pathJsonFile = 'curvedPath.json';
+%triangleJsonFile = 'triangleTest1.json';
+pathJsonFile = 'corridor.json';
 
-% Paramts
+% Parameters
 plotMap = 0;
-simSpeedup = 10000;
+simSpeedup = 10;
 
 % Path Simulator
 pathsim = ClosestTriangulationSimulator(pathJsonFile, plotMap);
@@ -18,6 +18,9 @@ while ~pathsim.finished
     pathsim.propogate();
 end
 pathsim.writeLogFiles();
+
+% Send email
+sendEmail('files/login.ini', 'Simulation Finished', 'The simulation has finished succsefully');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

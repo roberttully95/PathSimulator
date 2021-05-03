@@ -29,6 +29,9 @@ classdef ManualTriangleSimulator < Simulator
             % Triangulate
             this.triangulate();
             
+            % Initialize the first vehicle.
+            this.initVehicle(1);
+            
             % Plot triangles
             this.plotTriangles();
         end
@@ -43,9 +46,40 @@ classdef ManualTriangleSimulator < Simulator
         function propogate(this)
             % PROPOGATE Propogates the simulation by 'dT' seconds.
             
+            % Propogate
+            for j = 1:this.nActiveVehicles
+                i = this.activeVehicles(j);
+
+                % Get desired heading
+                triangle = this.triangles(this.vehicles(i).triangleIndex);
+                thDesired = atan2(triangle.dir(2), triangle.dir(1));
+
+                % Propogate vehicle
+                this.vehicles(i).propogate(this.dT, thDesired);
+
+                % Update triangle
+                if ~triangle.containsPt(this.vehicles(i).pos)
+                    this.vehicles(i).triangleIndex = triangle.nextIndex;
+                end
+
+            end
+            this.t = this.t + this.dT;
+            this.pause();
+            
+            %%%%%%%%%%%%%
+            % POSTCHECK %
+            %%%%%%%%%%%%%
+            this.postPropogationUpdate();
+            
+            % Plot vehicles in their new state
+            this.plotVehicles();  
+            
+            %{
             % Iterate through vehicles.
             for i = 1:this.nVehicles
                 
+                
+            
                 % If finished has finished crossing the map
                 if this.vehicles(i).finished
                     continue;
@@ -112,6 +146,7 @@ classdef ManualTriangleSimulator < Simulator
             % Update time
             this.t = this.t + this.dT;
             this.pause();
+            %}
         end
         
     end

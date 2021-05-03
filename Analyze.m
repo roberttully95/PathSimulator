@@ -1,7 +1,7 @@
 beep off
 
 % Specify the name of the simulation we are analyzing
-simUnderTest = 'curvedPath';
+simUnderTest = 'corridor';
 
 %%%%%%%%%%%%%
 % LOAD DATA %
@@ -22,14 +22,10 @@ vehicleData = readtable(vehicleLogFile);
 % VEHICLE DATA
 
 % Step 1: Remove vehicles with no duration and the vehicles they collided with
-selfIndices = find(vehicleData.DURATION == 0 & vehicleData.END_CONDITION == 1);
-collIndices = vehicleData{selfIndices, 'COLLIDED_WITH'};
-combined = [selfIndices; collIndices];
-vehicleData(combined, :) = [];
-
-% Step 2: Remove vehicles with no duration that collided with wall
-collIndices = find(vehicleData.DURATION == 0);
-vehicleData(collIndices, :) = [];
+initCollisionEvents = sum(vehicleData.DURATION == 0 & vehicleData.END_CONDITION == 1);
+if initCollisionEvents > 0
+    warning("Collision events occurred during vehicle initialization!")
+end
 
 %%%%%%%%%%%
 % ANALYZE %
@@ -41,23 +37,38 @@ successRate = numSuccess / height(vehicleData);
 fprintf("Success Rate: %.2f %%\n", successRate * 100);
 
 % Plot the times taken
-subplot(2, 1, 1)
+subplot(3, 1, 1)
 durationDist = fitdist(vehicleData.DURATION, 'Normal');
 x = (durationDist.mu - 4*durationDist.sigma):(durationDist.sigma/100):(durationDist.mu + 4*durationDist.sigma);
 y = normpdf(x, durationDist.mu, durationDist.sigma);
 plot(x, y)
 xline(durationDist.mu, 'g', 'LineWidth', 2);
 title('Vehicle Duration Distribution')
+xlim([x(1), x(end)])
 xlabel('Duration (s)')
 ylabel('Probability Density')
 
 % Plot the average vehicle velocities
-subplot(2, 1, 2)
+subplot(3, 1, 2)
 avgVelocityDist = fitdist(vehicleData.DIST_TRAVELLED ./ vehicleData.DURATION , 'Normal');
-x = (avgVelocityDist.mu - 4*avgVelocityDist.sigma):(avgVelocityDist.sigma/100):(avgVelocityDist.mu + 4*avgVelocityDist.sigma);
+x = 0:(avgVelocityDist.mu/500):2*avgVelocityDist.mu;
 y = normpdf(x, avgVelocityDist.mu, avgVelocityDist.sigma);
 plot(x, y)
 xline(avgVelocityDist.mu, 'g', 'LineWidth', 2);
 title('Average Vehicle Velocity Distribution')
+xlim([x(1), x(end)])
 xlabel('Velocity (m / s)')
 ylabel('Probability Density')
+
+% Plot the average vehicle distance travelled
+subplot(3, 1, 3)
+avgDistTravelled = fitdist(vehicleData.DIST_TRAVELLED, 'Normal');
+x = (avgDistTravelled.mu - 4*avgDistTravelled.sigma):(avgDistTravelled.sigma/100):(avgDistTravelled.mu + 4*avgDistTravelled.sigma);
+y = normpdf(x, avgDistTravelled.mu, avgDistTravelled.sigma);
+plot(x, y)
+xline(avgDistTravelled.mu, 'g', 'LineWidth', 2);
+title('Distance Travelled Distribution')
+xlim([x(1), x(end)])
+xlabel('Distance (m)')
+ylabel('Probability Density')
+

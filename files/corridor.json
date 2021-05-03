@@ -1,0 +1,87 @@
+{
+  "type": "Paths",
+  "properties": 
+  {
+    "nVehicles": 1000,
+    "deltaT": 0.1,
+    "velocity": 5,
+    "spawnFreq": 1,
+    "vehicleRadius": 1,
+    "omegaMax": 1.57,
+    "Kp": Inf,
+    "Ki": 0,
+    "Kd": 0,
+    "seed": 3.768277484E+9
+  },
+  "features": 
+  [
+    {
+      "type": "Path",
+      "geometry": {
+          "coordinates": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                90
+              ],
+              [
+                105,
+                90
+              ],
+              [
+                90,
+                135
+              ],
+              [
+                165,
+                150
+              ],
+              [
+                180,
+                225
+              ]
+            ]
+          ],
+          "type": "LineString"
+        }
+    },
+    {
+      "type": "Path",
+      "geometry": {
+      "coordinates": [
+        [
+          [
+            30,
+            0
+          ],
+          [
+            30,
+            75
+          ],
+          [
+            135,
+            60
+          ],
+          [
+            105,
+            120
+          ],
+          [
+            180,
+            150
+          ],
+          [
+            210,
+            225
+          ]
+        ]
+      ],
+      "type": "LineString"
+    }
+    }
+  ]
+}
