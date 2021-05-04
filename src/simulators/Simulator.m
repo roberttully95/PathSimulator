@@ -1,10 +1,9 @@
-classdef (Abstract) Simulator < handle
+classdef Simulator < handle
     %SIMULATOR Simulator base class. All of the code that is common between different algorithms
     %should be written here. This includes plotting the paths, reading data from input files, etc.
     
     % Simulation
     properties
-        type            % Determines the type of provided data (paths / triangles)
         speedup         % Determines the speedup factor of running the code in real-time.
         file            % Complete path to the .json file.
         triangles       % Array of triangles that form the map
@@ -17,7 +16,8 @@ classdef (Abstract) Simulator < handle
         distances       % The distances between each vehicle (Lower Triangular Matrix)
         mapAxis         % The axis for plotting the map.
         dataAxis        % The map for plotting vehicle-level data.
-
+        triMethod       % Defines the triangulation method in use for the simulation
+        
         LOG_PATH        % Path to the current simulation's logging directory.
     end
     
@@ -65,27 +65,18 @@ classdef (Abstract) Simulator < handle
         COLLIDED_WITH           % Stores the index of the vehicle collided with (if appropriate)
     end
     
-    methods (Abstract)
-        % Abstract methods are methods that have to be implemented by any classes derived from the
-        % class.
-        triangulate(this)
-        propogate(this)
-    end
-    
     % PUBLIC METHODS
     methods
         
-        function init(this, args)
-            %INIT Initializer for the simulator class.
+        function this = Simulator(path, triMethod, plot)
+            %SIMULATOR Constructor
             
-            % Detect invalid number of arguments.
-            n = size(args, 2);
-            if n < 1 || n > 2
-                error("Invalid number of arguments provided");
-            end
+            % Parse input data
+            this.triMethod = triMethod;
+            this.plotMode = (nargin == 3) * plot;
             
             % Set file
-            [~, filename, fileext] = fileparts(args{1});
+            [~, filename, fileext] = fileparts(path);
             this.file = strcat(cd, '\files\', filename, fileext);
             
             % Create logging directorys
@@ -97,11 +88,6 @@ classdef (Abstract) Simulator < handle
             % Read simulation data from input file.
             this.simData = readJson(this.file);
 
-            % Ensure correct type of map is being used
-            if this.simData.type ~= this.type
-                error("Invalid map type being used.")
-            end
-            
             % Initialize vehicle file parameters
             this.END_CONDITION = NaN(this.nVehicles, 1);
             this.END_TIME = NaN(this.nVehicles, 1);
@@ -113,15 +99,6 @@ classdef (Abstract) Simulator < handle
             % Setup random number generator
             rng(this.seed, 'combRecursive');
             
-            % Initialize Vehicles
-            this.initVehicles();
-            
-            % Set figures / axes
-            this.plotMode = 0;
-            if n == 2
-                this.plotMode = args{2};
-            end
-            
             % Initialize distances
             this.distances = NaN(this.nVehicles, this.nVehicles);
             
@@ -129,8 +106,26 @@ classdef (Abstract) Simulator < handle
             this.t = 0;
             this.speedup = 1;
             
-            % Plot region
+            % Define the triangulation
+            this.triangulate();
+            
+            % Init vehicles
+            this.initVehicles();
+            
+            % Plot triangles
             this.initPlot();
+            this.plotTriangles();
+        end
+        
+        function triangulate(this)
+            %TRIANGULATE Creates a triangulation based on the provided triangulation enumeration
+            %value
+            
+            switch this.triMethod
+                case Triangulation.Closest
+                    this.triangles = closestTriangulation(this.path1, this.path2);
+            end
+            
         end
         
         function initVehicles(this)
@@ -141,8 +136,14 @@ classdef (Abstract) Simulator < handle
             % Create vehicles array.
             this.vehicles = Vehicle.empty(0, this.nVehicles);
             for i = 1:this.nVehicles
-                this.vehicles(i) = Vehicle(NaN, NaN, NaN, this.velocity, 0, this.separationDist / 2, this.omegaMax);
+                this.vehicles(i) = Vehicle(NaN, NaN, NaN, this.velocity, 0, this.separationDist, this.omegaMax);
             end
+            
+            % Init
+            for i = 1:this.nVehicles
+                this.initVehicle(i);
+            end
+            
         end
         
         function initVehicle(this, i)
@@ -202,6 +203,19 @@ classdef (Abstract) Simulator < handle
             this.vehicles(i).y = pt(2);
             this.vehicles(i).active = true;
             
+            % Determine the vehicle's initial triangle index and heading
+            for i = 1:this.nTriangles
+                p = polyshape(this.triangles(i).x, this.triangles(i).y);
+                if isinterior(p, xR, yR)
+                    this.vehicles(i).triangleIndex = i;
+                    this.vehicles(i).th = atan2(this.triangles(i).dir(2), this.triangles(i).dir(1));
+                    break;
+                end
+                if i == this.nTriangles
+                    error("Vehicle not located in triangle!")
+                end
+            end
+            
             % NOTE: Cannot assign the vehicle heading until the
             % triangulation has been performed.
         end
@@ -252,21 +266,23 @@ classdef (Abstract) Simulator < handle
         function plotTriangles(this)
             %PLOTTRIANGLES Plots the triangles on the map plot.
             
-            if this.hasAxis
-                for i = 1:size(this.triangles, 2)
-                    % Plot triangle
-                    tri = this.triangles(i);
-                    tri.plot(this.mapAxis, 'g');
+            if ~this.hasAxis
+                return;
+            end
+            
+            for i = 1:size(this.triangles, 2)
+                % Plot triangle
+                tri = this.triangles(i);
+                tri.plot(this.mapAxis, 'g');
 
-                    % Get centroid
-                    v = tri.centroid;
-                    
-                    % Get length 
-                    len = (1/6) * tri.dirLength;
-                    
-                    % Plot arrows
-                    arrows(this.mapAxis, v(1), v(2), len, 90 - atan2(tri.dir(2), tri.dir(1)) * (180 / pi))
-                end
+                % Get centroid
+                v = tri.centroid;
+
+                % Get length 
+                len = (1/6) * tri.dirLength;
+
+                % Plot arrows
+                arrows(this.mapAxis, v(1), v(2), len, 90 - atan2(tri.dir(2), tri.dir(1)) * (180 / pi))
             end
         end
         
@@ -323,7 +339,38 @@ classdef (Abstract) Simulator < handle
             end
             this.DIST_TRAVELLED(i) = this.vehicles(i).distTravelled;
         end
+        
+        function propogate(this)
+            % PROPOGATE Propogates the simulation by 'dT' seconds.
+            
+            % Propogate
+            for j = 1:this.nActiveVehicles
+                i = this.activeVehicles(j);
                 
+                % Get desired heading
+                triangle = this.triangles(this.vehicles(i).triangleIndex);
+                thDesired = atan2(triangle.dir(2), triangle.dir(1));
+                
+                % Propogate vehicle
+                this.vehicles(i).propogate(this.dT, thDesired);
+                
+                % Update triangle
+                if ~triangle.containsPt(this.vehicles(i).pos)
+                    this.vehicles(i).triangleIndex = triangle.nextIndex;
+                end
+            end
+            this.t = this.t + this.dT;
+            this.pause();
+            
+            %%%%%%%%%%%%%
+            % POSTCHECK %
+            %%%%%%%%%%%%%
+            this.postPropogationUpdate();
+            
+            % Plot vehicles in their new state
+            this.plotVehicles();
+        end
+        
         function postPropogationUpdate(this)
             %POSTPROPOGATIONUPDATE After all vehicles have been propogated,
             %call this function to check for collisions that occurred
@@ -450,10 +497,6 @@ classdef (Abstract) Simulator < handle
             val = this.simData.properties.deltaT;
         end
 
-        function val = get.tEnd(this)
-            val = (this.nVehicles - 1)/this.fSpawn;
-        end 
-        
         function val = get.seed(this)
             val = this.simData.properties.seed;
         end
@@ -474,10 +517,6 @@ classdef (Abstract) Simulator < handle
             val = this.simData.properties.nVehicles;
         end
 
-        function val = get.vehicleRadius(this)
-            val = this.simData.properties.vehicleRadius;
-        end
-        
         function val = get.omegaMax(this)
             val = this.simData.properties.omegaMax;
         end
