@@ -17,6 +17,7 @@ classdef Simulator < handle
         mapAxis         % The axis for plotting the map.
         dataAxis        % The map for plotting vehicle-level data.
         triMethod       % Defines the triangulation method in use for the simulation
+        waypoints       % Stores the waypoints for each vehicle
         
         LOG_PATH        % Path to the current simulation's logging directory.
     end
@@ -111,6 +112,7 @@ classdef Simulator < handle
             
             % Init vehicles
             this.initVehicles();
+            this.calculateWaypoints();
             
             % Plot triangles
             this.initPlot();
@@ -218,6 +220,37 @@ classdef Simulator < handle
             
             % NOTE: Cannot assign the vehicle heading until the
             % triangulation has been performed.
+        end
+        
+        function calculateWaypoints(this)
+            %CALCULATEWAYPOINTS Calculates the waypoints for the vehicles.
+            
+            % Init waypoints cell array
+            this.waypoints = cell(this.nVehicles, 1);
+            
+            % Iterate through the vehicles
+            for i = 1:this.nVehicles
+                
+                % Get the triangle index
+                j = this.vehicles(i).triangleIndex;
+                
+                % Init array to store x and y positions
+                pts = NaN(this.nTriangles - j, 2);
+                
+                % Iterate through the triangles
+                for j = 1:this.nTriangles
+                    
+                    % Find intersection between current state and exit edge
+                    pt = raySegmentIntersection(this.vehicles(i).pos, this.triangles(j).dir, this.triangles(j).exitEdge);
+                    
+                    % Add intersection to pts array
+                    
+                end   
+                
+                % Add pts to waypoints
+                this.waypoints{i} = pts;
+            end
+            
         end
         
         function initPlot(this)
