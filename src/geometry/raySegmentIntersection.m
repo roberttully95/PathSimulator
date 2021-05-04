@@ -1,7 +1,7 @@
 function pt = raySegmentIntersection(origin, dir, line)
 %RAYSEGMENTINTERSECTION Summary of this function goes here
 %   Detailed explanation goes here
-
+    
     v1 = origin - line(1, :);
     v2 = line(2, :) - line(1, :);
     v3 = [-dir(2), dir(1)];

@@ -113,7 +113,7 @@ classdef Simulator < handle
             % Init vehicles
             this.initVehicles();
             this.calculateWaypoints();
-            
+
             % Plot triangles
             this.initPlot();
             this.plotTriangles();
@@ -206,14 +206,14 @@ classdef Simulator < handle
             this.vehicles(i).active = true;
             
             % Determine the vehicle's initial triangle index and heading
-            for i = 1:this.nTriangles
-                p = polyshape(this.triangles(i).x, this.triangles(i).y);
+            for j = 1:this.nTriangles
+                p = polyshape(this.triangles(j).x, this.triangles(j).y);
                 if isinterior(p, xR, yR)
-                    this.vehicles(i).triangleIndex = i;
-                    this.vehicles(i).th = atan2(this.triangles(i).dir(2), this.triangles(i).dir(1));
+                    this.vehicles(i).triangleIndex = j;
+                    this.vehicles(i).th = atan2(this.triangles(j).dir(2), this.triangles(j).dir(1));
                     break;
                 end
-                if i == this.nTriangles
+                if j == this.nTriangles
                     error("Vehicle not located in triangle!")
                 end
             end
@@ -237,14 +237,18 @@ classdef Simulator < handle
                 % Init array to store x and y positions
                 pts = NaN(this.nTriangles - j, 2);
                 
+                % Get the current point
+                pStart = this.vehicles(i).pos;
+                
                 % Iterate through the triangles
-                for j = 1:this.nTriangles
+                for k = j:this.nTriangles
                     
                     % Find intersection between current state and exit edge
-                    pt = raySegmentIntersection(this.vehicles(i).pos, this.triangles(j).dir, this.triangles(j).exitEdge);
+                    pt = raySegmentIntersection(pStart, this.triangles(k).dir, this.triangles(k).exitEdge);
                     
                     % Add intersection to pts array
-                    
+                    pts(k - j + 1, :) = pt;
+                    pStart = pt;
                 end   
                 
                 % Add pts to waypoints
