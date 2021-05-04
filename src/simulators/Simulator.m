@@ -167,7 +167,7 @@ classdef Simulator < handle
             k = 1;
             validLocation = false;
             while ~validLocation
-                if k == 1000000
+                if k == 1000
                     error("Cannot fit specified number of vehicle on the map!");
                 end
                 
@@ -214,7 +214,7 @@ classdef Simulator < handle
                     break;
                 end
                 if j == this.nTriangles
-                    error("Vehicle not located in triangle!")
+                    error("Vehicle not located in any map triangle!")
                 end
             end
             
@@ -235,10 +235,11 @@ classdef Simulator < handle
                 j = this.vehicles(i).triangleIndex;
                 
                 % Init array to store x and y positions
-                pts = NaN(this.nTriangles - j, 2);
+                pts = NaN(this.nTriangles - j + 2, 2);
                 
                 % Get the current point
                 pStart = this.vehicles(i).pos;
+                pts(1, :) = pStart;
                 
                 % Iterate through the triangles
                 for k = j:this.nTriangles
@@ -247,7 +248,7 @@ classdef Simulator < handle
                     pt = raySegmentIntersection(pStart, this.triangles(k).dir, this.triangles(k).exitEdge);
                     
                     % Add intersection to pts array
-                    pts(k - j + 1, :) = pt;
+                    pts(k - j + 2, :) = pt;
                     pStart = pt;
                 end   
                 
