@@ -2,16 +2,15 @@
   "type": "Paths",
   "properties": 
   {
-    "nVehicles": 50,
+    "nVehicles": 10,
     "deltaT": 0.1,
-    "velocity": 18,
-    "spawnFreq": 1,
-    "vehicleRadius": 1,
+    "velocity": 5,
     "omegaMax": 1.57,
     "Kp": Inf,
     "Ki": 0,
     "Kd": 0,
-    "seed": 3.768277484E+9
+    "seed": 3.768277484E+9,
+    "separationDist": 5
   },
   "features": 
   [

@@ -160,39 +160,49 @@ classdef Simulator < handle
             yMin = min([this.path1.y; this.path2.y]);
             yMax = max([this.path1.y; this.path2.y]);
               
-            % Init polygon shape
-            poly = polyshape([this.path1.x; flipud(this.path2.x)], [this.path1.y; flipud(this.path2.y)]);
-            
             % Init
             k = 1;
             validLocation = false;
+            if i == 1
+                % If the first vehicle, then it must be in the first
+                % triangle
+                poly = polyshape(this.triangles(1).x, this.triangles(1).y);
+            else
+                % Init polygon shape
+                poly = polyshape([this.path1.x; flipud(this.path2.x)], [this.path1.y; flipud(this.path2.y)]);
+            end
+                
             while ~validLocation
                 if k == 1000
                     error("Cannot fit specified number of vehicle on the map!");
                 end
-                
+
                 % Create random coordinate
                 xR = xMin + rand * (xMax - xMin);
                 yR = yMin + rand * (yMax - yMin);
-                
+
                 % Generate point
                 pt = [xR, yR];
-                
+
                 % Ensure the point is located within the polygon
                 if ~isinterior(poly, xR, yR)
                     k = k + 1;
                     continue;
                 end
-                
-                % Ensure it is between rColl and 3rColl away from another
-                % vehicle
+
+                % Ensure vehicle is greater than sep dist from all vehicles
                 dists = sqrt((pos(:, 1) - pt(1)).^2 + (pos(:, 2) - pt(2)).^2);
                 if any(dists < this.separationDist )
                     k = k + 1;
                     continue;
-                elseif all(dists > 2*this.separationDist)
-                    k = k + 1;
-                    continue;
+                end
+
+                % Ensure vehicle is less than sep dist from any vehicle
+                if i ~= 1
+                    if ~any(dists < 3*this.separationDist)
+                        k = k + 1;
+                        continue;
+                    end
                 end
                 
                 % At this point, it is valid
@@ -512,6 +522,13 @@ classdef Simulator < handle
             VEHICLE_DATA = [{'Vehicle','END_CONDITION','END_TIME','DURATION', 'DIST_TRAVELLED', 'COLLIDED_WITH'};...
                 num2cell((1:this.nVehicles)'), num2cell(this.END_CONDITION), num2cell(this.END_TIME), num2cell(this.DURATION), num2cell(this.DIST_TRAVELLED), num2cell(this.COLLIDED_WITH)];
             writecell(VEHICLE_DATA, this.VEHICLE_PATH)          
+            
+            % Write waypoints
+            warning( 'off', 'MATLAB:xlswrite:AddSheet' ) ;
+            filename = strcat(this.LOG_PATH, "\waypoints.xls");
+            for i = 1:length(this.waypoints)
+                writematrix(this.waypoints{i}, filename, 'Sheet', i);
+            end
         end
         
     end
