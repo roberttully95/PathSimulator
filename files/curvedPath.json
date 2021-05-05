@@ -2,7 +2,7 @@
   "type": "Paths",
   "properties": 
   {
-    "nVehicles": 12,
+    "nVehicles": 5,
     "deltaT": 0.1,
     "velocity": 0.1,
     "omegaMax": 0.78539816339744828,
