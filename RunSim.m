@@ -22,9 +22,11 @@ simSpeedup = 1;
     pathsim.writeLogFiles();
 %}
 
-% This runs the simulation with velocity change.
+% NOTE: WHEN RUNNING WITH VELOCITY CHANGE, THE VELOCY AND NUMBER OF
+% VEHICLES IN THE CONFIG FILES IS IGNORED, AND ONLY THE VELOCITY 
+% TABLE data IS USED.
 
-% Path Simulator
+% Run simulator with velocity change.
 pathsim = VelChangeSimulator(pathJsonFile, pathVelFile, triangulation, plotMap);
 pathsim.speedup = simSpeedup;
 while ~pathsim.finished

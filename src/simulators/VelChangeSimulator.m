@@ -94,6 +94,9 @@ classdef VelChangeSimulator < handle
             % Read simulation data from input file.
             this.simData = readJson(this.configPath);
 
+            % Load the velocity table
+            this.loadVelocityArray();
+            
             % Initialize vehicle file parameters
             this.END_CONDITION = NaN(this.nVehicles, 1);
             this.END_TIME = NaN(this.nVehicles, 1);
@@ -114,9 +117,6 @@ classdef VelChangeSimulator < handle
             
             % Define the triangulation
             this.triangulate();
-            
-            % Load the velocity table
-            this.loadVelocityArray();
             
             % Init vehicles
             this.initVehicles();
@@ -143,12 +143,7 @@ classdef VelChangeSimulator < handle
             % Read raw table data
             rawTable = readtable(this.velPath, 'ReadVariableNames',false);
             [r, c] = size(rawTable);
-            
-            % Assert
-            if this.nVehicles ~= (c - 1)
-                error("Number of vehicles does not match between config and velocity file!")
-            end
-            
+
             % Convert to array
             rawArray = table2array(rawTable);
             
@@ -577,7 +572,7 @@ classdef VelChangeSimulator < handle
         end
         
         function val = get.nVehicles(this)
-            val = this.simData.properties.nVehicles;
+            val = size(this.velArray, 2) - 1;
         end
 
         function val = get.omegaMax(this)
