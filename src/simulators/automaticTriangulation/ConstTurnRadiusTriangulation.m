@@ -1,5 +1,7 @@
 function triangles = ConstTurnRadiusTriangulation(pA, pB, vMax, thetaDot)
 %CONSTTURNRADIUSTRIANGULATION 
+%TODO: Rename simulation since the turn radius is not necessarily the same,
+%but it is used to determine the radii.
 %
 % ASSUMPTIONS: 
 %   1: Same number of vertices for left and right path
@@ -84,8 +86,34 @@ function triangles = ConstTurnRadiusTriangulation(pA, pB, vMax, thetaDot)
         else
             [centers(i - 1, :), ~] = vectorCircleIntersection(vOutside, bisector, vInside, r);
         end
-        viscircles(centers(i - 1, :), r, 'Color', 'r');
     end
+    
+    %%%%%%%%%%%%%%%%%%
+    % GET MAX RADIUS %
+    %%%%%%%%%%%%%%%%%%
+    radii = NaN(n - 2, 1);
+    for i = 2:(n-1)
+        
+        % Get turn direction
+        current = turns(i - 1);
+        opposite = (current == 1) * 2 + (current == 2) * 1;
+        
+        % Get candidate lines
+        line1 = [P(opposite).coords(i, :); P(opposite).coords(i - 1, :)];
+        line2 = [P(opposite).coords(i, :); P(opposite).coords(i + 1, :)];
+        
+        % Get distances
+        d1 = distToLineSegment(line1, centers(i - 1, :));
+        d2 = distToLineSegment(line2, centers(i - 1, :));
+        
+        % Assign radius
+        radii(i - 1, :) = min(d1, d2);
+    end
+    
+    %%%%%%%%%%%%%%
+    % GET WIDTHS %
+    %%%%%%%%%%%%%%
+    widths = radii - r;
     
     %%%%%%%%%%%%%%%
     % TRIANGULATE %
