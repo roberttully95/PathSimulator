@@ -7,36 +7,25 @@ function data = readJson(file)
     struct_ = jsondecode(char(fread(fid, inf)'));
     fclose(fid); 
     
-    % Determine the number of objects.
-    objects = struct_.features;
-    n = size(objects, 1);
+    % Determine the number of paths.
+    paths = struct_.features;
+    n = size(paths, 1);
     
-    % Set map type
-    data.type = struct_.type;
+    % Assert
+    if n ~= 2
+        error("There must be exactly 2 paths provided (left, right)");
+    end
     
     % Copy the map-level properties.
     data.properties = struct_.properties;
 
-    % Init obstacles
+    % Init paths
     data.paths = Path.empty(n, 0);
-    data.triangles = Triangle.empty(n, 0);
     
     % Parse through objects
-    jPath = 1;
-    jTri = 1;
     for i = 1:n
-        obj = objects(i);
-        coords = squeeze(obj.geometry.coordinates);
-        switch obj.type
-            case "Path"
-                data.paths(jPath) = Path(coords(:, 1), coords(:, 2));
-                jPath = jPath + 1;
-            case "Triangle"
-                data.triangles(jTri) = Triangle(coords(1, :), coords(2, :), coords(3, :), 'Vertices');
-                jTri = jTri + 1;
-            otherwise
-                warning("Invalid map object provided.")
-        end
+        coords = squeeze(paths(i).geometry.coordinates);
+        data.paths(i) = Path(coords(:, 1), coords(:, 2));
     end
 end
 
