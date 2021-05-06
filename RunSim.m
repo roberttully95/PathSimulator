@@ -4,7 +4,8 @@ addpath(genpath("src"))
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pathJsonFile = 'corridor.json';
-triangulation = Triangulation.Closest;
+%triangulation = Triangulation.Closest;
+triangulation = Triangulation.ConstantTurnRadius;
 plotMap = 1;
 simSpeedup = 10;
 

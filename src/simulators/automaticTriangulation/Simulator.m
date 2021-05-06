@@ -107,6 +107,8 @@ classdef Simulator < handle
             this.t = 0;
             this.speedup = 1;
             
+            this.initPlot();
+            
             % Define the triangulation
             this.triangulate();
             
@@ -128,6 +130,8 @@ classdef Simulator < handle
             switch this.triMethod
                 case Triangulation.Closest
                     this.triangles = closestTriangulation(this.path1, this.path2);
+                case Triangulation.ConstantTurnRadius
+                    this.triangles = ConstTurnRadiusTriangulation(this.path1, this.path2, this.velocity, this.omegaMax);
             end
         end
         

@@ -6,5 +6,6 @@ classdef Triangulation
     
     enumeration
         Closest
+        ConstantTurnRadius
     end
 end
