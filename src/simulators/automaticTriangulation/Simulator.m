@@ -236,10 +236,6 @@ classdef Simulator < handle
                 plot(this.mapAxis, this.entryEdge(:, 1), this.entryEdge(:, 2), 'g', 'LineWidth', 1.5)
                 plot(this.mapAxis, this.exitEdge(:, 1), this.exitEdge(:, 2), 'r', 'LineWidth', 1.5)
 
-                % Plot the vertices along the paths
-                scatter(this.mapAxis, this.path1.x, this.path1.y, 'r');
-                scatter(this.mapAxis, this.path2.x, this.path2.y, 'r');
-
                 % Label Axes
                 xlabel(this.mapAxis, "x");
                 ylabel(this.mapAxis, "y");
