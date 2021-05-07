@@ -132,6 +132,8 @@ classdef Simulator < handle
                     this.triangles = closestTriangulation(this.path1, this.path2);
                 case Triangulation.ConstantVelocity
                     this.triangles = ConstVelocityTriangulation(this.path1, this.path2, this.velocity, this.omegaMax);
+                case Triangulation.ConstantTurnRadius
+                    this.triangles = ConstTurnRadiusTriangulation(this.path1, this.path2, this.velocity, this.omegaMax);
             end
         end
         

@@ -1,5 +1,5 @@
-function triangles = ConstVelocityTriangulation(pL, pR, vMax, thetaDot)
-%CONSTVELOCITYTRIANGULATION 
+function triangles = ConstTurnRadiusTriangulation(pL, pR, vMax, thetaDot)
+%CONSTTURNRADIUSTRIANGULATION 
 %
 % ASSUMPTIONS: 
 %   1: Same number of vertices for left and right path
@@ -43,11 +43,12 @@ function triangles = ConstVelocityTriangulation(pL, pR, vMax, thetaDot)
     %%%%%%%%%%%%%%%%%%%%
     % GET TURN CENTERS %
     %%%%%%%%%%%%%%%%%%%%
-    centers = NaN(n - 2, 2);
+    innerCenters = NaN(n - 2, 2);
+    outerCenters = NaN(n - 2, 2);
     for i = 2:(n-1)
         
         % Get turn direction
-        current = turns(i-1);
+        current = turns(i - 1);
         opposite = (current == 1) * 2 + (current == 2) * 1; 
         
         % Get inside and outside verts
@@ -58,7 +59,10 @@ function triangles = ConstVelocityTriangulation(pL, pR, vMax, thetaDot)
         vec2 = vecNorm(P(opposite).coords(i - 1, :) - vOutside);
         vec1 = vecNorm(P(opposite).coords(i + 1, :) - vOutside);
         bisector = vectorBisect(vec2, vec1);
-
+        th = acos(max(min(dot(vec1, vec2)/(norm(vec1)*norm(vec2)), 1), -1));
+        len = r / sin(th / 2);
+        outerCenters(i - 1, :) = vOutside + bisector * len;
+        
         % Get the vectors that point away from the inside apex.
         vec1 = vecNorm(P(current).coords(i + 1, :) - vInside);
         vec2 = vecNorm(P(current).coords(i - 1, :) - vInside);
@@ -79,45 +83,21 @@ function triangles = ConstVelocityTriangulation(pL, pR, vMax, thetaDot)
         % halfplane
         hp = (vInside - vOutside)*normal';
         if hp < hpB
-            centers(i - 1, :) = ptA;
+            innerCenters(i - 1, :) = ptA;
         elseif hp > hpA
-            centers(i - 1, :) = ptB;
+            innerCenters(i - 1, :) = ptB;
         else
-            [centers(i - 1, :), ~] = vectorCircleIntersection(vOutside, bisector, vInside, r);
+            [innerCenters(i - 1, :), ~] = vectorCircleIntersection(vOutside, bisector, vInside, r);
         end
     end
     
-    %%%%%%%%%%%%%%%%%%
-    % GET MAX RADIUS %
-    %%%%%%%%%%%%%%%%%%
-    outerRadii = NaN(n - 2, 1);
-    for i = 2:(n-1)
-        
-        % Get turn direction
-        current = turns(i - 1);
-        opposite = (current == 1) * 2 + (current == 2) * 1;
-        
-        % Get line segments from the opposite path
-        points = P(opposite).coords;
-        lines = cell(size(points, 1) - 1, 1);
-        for j = 2:size(points, 1)
-            lines{j - 1} = [points(j - 1, :); points(j, :)];
-        end
-        
-        % Get dists to each line segment
-        dists = NaN(size(points, 1) - 1, 1);
-        for j = 1:size(lines, 1)
-            dists(j) = distToLineSegment(lines{j}, centers(i - 1, :));
-        end
-        outerRadii(i - 1, :) = min(dists);
-        
-        %viscircles(centers(i - 1, :),  min(d1, d2));
+    % Plot inner and outer circles
+    for i = 1:size(innerCenters, 1)
+        viscircles(innerCenters(i, :), r, 'Color', 'r');
+        viscircles(outerCenters(i, :), r, 'Color', 'g');
     end
     
-    % Plot circles
-    viscircles(centers, outerRadii, 'Color', 'r');
-    viscircles(centers, repmat(r, size(outerRadii)), 'Color', 'g');
-    
+    %{
     %%%%%%%%%%%%%%%%
     % GET TANGENTS %
     %%%%%%%%%%%%%%%%
@@ -217,5 +197,6 @@ function triangles = ConstVelocityTriangulation(pL, pR, vMax, thetaDot)
     %%%%%%%%%%%%%%%
     % TRIANGULATE %
     %%%%%%%%%%%%%%%
+    %}
 end
 
