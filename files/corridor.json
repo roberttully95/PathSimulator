@@ -4,7 +4,7 @@
   {
     "nVehicles": 25,
     "deltaT": 0.1,
-    "velocity": 5,
+    "velocity": 10,
     "spawnFreq": 1,
     "vehicleRadius": 1,
     "omegaMax": 1.57,

@@ -157,46 +157,84 @@ function triangles = ConstTurnRadiusTriangulation(pL, pR, vMax, thetaDot)
         plot(rightTangents{i}(:, 1), rightTangents{i}(:, 2),'r','LineWidth', 4);
         plot(leftTangents{i}(:, 1), leftTangents{i}(:, 2),'g','LineWidth', 4);
     end
+
+    %%%%%%%%%%%%%%%%%%%%%%%%
+    % GET STRAIGHT REGIONS %
+    %%%%%%%%%%%%%%%%%%%%%%%%
+    straightRegions = Triangle.empty(2 * length(rightTangents), 0);
+    for i = 1:length(rightTangents)
+        % Create two separate triangles for each straight region. 
+        %   1: 'insideStart -> insideEnd -> outsideEnd'
+        %   2: 'insideStart -> outsideStart -> outsideEnd'
+        insideStart = rightTangents{i}(1, :);
+        insideEnd = rightTangents{i}(2, :);
+        outsideStart = leftTangents{i}(1, :);
+        outsideEnd = leftTangents{i}(2, :);
+
+        % Get coordinates of the region and the heading of the region
+        straightRegions(2*i - 1) = Triangle(outsideStart, insideStart, outsideEnd, 'Vertices');
+        straightRegions(2*i) = Triangle(insideStart, outsideEnd, insideEnd, 'Vertices');
+    end
     
-    %{
-    % Get quadrilateral regions
+    %%%%%%%%%%%%%%%%%%%%
+    % GET TURN REGIONS %
+    %%%%%%%%%%%%%%%%%%%%
+    turnRegions = Triangle.empty(3 * length(turns), 0);
     for i = 1:length(turns)
         
         % Get turn direction
         current = turns(i);
         opposite = (current == 1) * 2 + (current == 2) * 1; 
-         
-        % Get the coordinates of the start and end of the turn vertices for
-        % the turn
-        rEnd = rightTangents{i}(2, :);
-        rStart = rightTangents{i + 1}(1, :);
-        lEnd = leftTangents{i}(2, :);
-        lStart = leftTangents{i + 1}(1, :);
         
-        % Create the incoming and outgoing edges
-        incomingEdge = [rEnd; lEnd];
-        outgoingEdge = [rStart; lStart];
+        % Get the vertices
+        if turns(i) == 1
+            % Right turn
+            insideStart = rightTangents{i}(2, :);
+            insideEnd = rightTangents{i + 1}(1, :);
+            outsideStart = leftTangents{i}(2, :);
+            outsideEnd = leftTangents{i + 1}(1, :);
+        else
+            % Left turn
+            outsideStart = rightTangents{i}(2, :);
+            outsideEnd = rightTangents{i + 1}(1, :);
+            insideStart = leftTangents{i}(2, :);
+            insideEnd = leftTangents{i + 1}(1, :);
+        end
         
-        % Get the intersection point
-        intPt = lineLineIntersection(incomingEdge, outgoingEdge);
-        
-        % Calculate the length of the triangle edges to cover the entire
-        % region
-        vec1 = vecNorm(incomingEdge(opposite, :) - intPt);
-        vec2 = vecNorm(outgoingEdge(opposite, :) - intPt);
-        
-        % Just assume 2 x rBig (FIXME)
-        pt1 = intPt + 2 * outerRadii(i) * vec1;
-        pt2 = intPt + 2 * outerRadii(i) * vec2;
-        
-        % Plot the triangle
-        p = polyshape([pt1; pt2; intPt]);
-        plot(p);
+        % Make triangles
+        turnRegions(3*i - 2) = Triangle(outsideStart, insideStart, P(opposite).coords(i + 1, :), 'Vertices');
+        turnRegions(3*i - 1) = Triangle(insideStart, P(opposite).coords(i + 1, :), insideEnd, 'Vertices');
+        turnRegions(3*i) = Triangle(P(opposite).coords(i + 1, :), insideEnd, outsideEnd, 'Vertices');
     end
-
-    %%%%%%%%%%%%%%%
-    % TRIANGULATE %
-    %%%%%%%%%%%%%%%
-    %}
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%
+    % CREATE TRIANGULATION %
+    %%%%%%%%%%%%%%%%%%%%%%%%
+    triangles = Triangle.empty(length(straightRegions) + length(turnRegions), 0);
+    for i = 1:length(rightTangents)
+        j = 5*(i - 1);
+        
+        % For the first sequence, we don't have a turn
+        if i ~= 1
+            % Create objects
+            triangles(j - 2) = turnRegions(3*(i -1) - 2);
+            triangles(j - 1) = turnRegions(3*(i -1) - 1);
+            triangles(j) = turnRegions(3*(i -1));
+        end
+        
+        % For each sequence, we have turn followed by straight
+        triangles(j + 1) = straightRegions(2*i - 1);
+        triangles(j + 2) = straightRegions(2*i);
+    end
+    for i = 1:length(triangles)
+        triangles(i).prevIndex = i - 1;
+        triangles(i).nextIndex = i + 1;
+    end
+    triangles(1).prevIndex = 0;
+    triangles(end).nextIndex = NaN;
+    
+    % Plot regions
+    %for i = 1:length(triangles)
+    %    triangles(i).plot(gca, 'r');
+    %end
 end
-
