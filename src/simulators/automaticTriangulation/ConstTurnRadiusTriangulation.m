@@ -97,7 +97,6 @@ function triangles = ConstTurnRadiusTriangulation(pL, pR, vMax, thetaDot)
         viscircles(outerCenters(i, :), r, 'Color', 'g');
     end
     
-    %{
     %%%%%%%%%%%%%%%%
     % GET TANGENTS %
     %%%%%%%%%%%%%%%%
@@ -109,42 +108,42 @@ function triangles = ConstTurnRadiusTriangulation(pL, pR, vMax, thetaDot)
             % If we are dealing with point-circle
             if turns(i) == 1
                 % If turn is right turn
-                [~, ~, ~, currR] = circleCircleTangents(pR.coords(i, :), 0, centers(i, :), r);
-                [~, ~, ~, currL] = circleCircleTangents(pL.coords(i, :), 0, centers(i, :), outerRadii(i, :));
+                [~, ~, ~, currR] = circleCircleTangents(pR.coords(i, :), 0, innerCenters(i, :), r);
+                [~, ~, ~, currL] = circleCircleTangents(pL.coords(i, :), 0, outerCenters(i, :), r);
             else
                 % If turn is left turn
-                [~, ~,  currL, ~] = circleCircleTangents(pL.coords(i, :), 0, centers(i, :), r);
-                [~, ~,  currR, ~] = circleCircleTangents(pR.coords(i, :), 0, centers(i, :), outerRadii(i, :));
+                [~, ~,  currL, ~] = circleCircleTangents(pL.coords(i, :), 0, innerCenters(i, :), r);
+                [~, ~,  currR, ~] = circleCircleTangents(pR.coords(i, :), 0, outerCenters(i, :), r);
             end
         elseif i == (n-1)
             % If we are dealing with circle-point
             if turns(i - 1) == 1
                 % If turn is right turn
-                [~, ~, currR, ~] = circleCircleTangents(centers(i - 1, :), r, pR.coords(end, :), 0);
-                [~, ~, currL, ~] = circleCircleTangents(centers(i - 1, :), outerRadii(i - 1, :), pL.coords(end, :), 0);
+                [~, ~, currR, ~] = circleCircleTangents(outerCenters(i - 1, :), r, pR.coords(end, :), 0);
+                [~, ~, currL, ~] = circleCircleTangents(innerCenters(i - 1, :), r, pL.coords(end, :), 0);
             else
                 % If turn is left turn
-                [~, ~, ~, currL] = circleCircleTangents(centers(i - 1, :), r, pL.coords(end, :), 0);
-                [~, ~, ~, currR] = circleCircleTangents(centers(i - 1, :), outerRadii(i - 1, :), pR.coords(end, :), 0);
+                [~, ~, ~, currL] = circleCircleTangents(innerCenters(i - 1, :), r, pL.coords(end, :), 0);
+                [~, ~, ~, currR] = circleCircleTangents(outerCenters(i - 1, :), r, pR.coords(end, :), 0);
             end
         else
             % If we are dealing with circle-circle
             if turns(i - 1) == 1 && turns(i) == 2
                 % Right turn then left turn
-                [~, ~, currR, ~] = circleCircleTangents(centers(i - 1, :), r, centers(i, :), outerRadii(i, :));
-                [~, ~, currL, ~] = circleCircleTangents(centers(i - 1, :), outerRadii(i - 1, :), centers(i, :), r);
+                [~, ~, currR, ~] = circleCircleTangents(innerCenters(i - 1, :), r, outerCenters(i, :), r);
+                [~, ~, currL, ~] = circleCircleTangents(outerCenters(i - 1, :), r, innerCenters(i, :), r);
             elseif turns(i - 1) == 2 && turns(i) == 1
                 % Left turn then right turn
-                [~, ~, ~, currL] = circleCircleTangents(centers(i - 1, :), r, centers(i, :), outerRadii(i, :));
-                [~, ~, ~, currR] = circleCircleTangents(centers(i - 1, :), outerRadii(i - 1, :), centers(i, :), r);
+                [~, ~, ~, currL] = circleCircleTangents(innerCenters(i - 1, :), r, outerCenters(i, :), r);
+                [~, ~, ~, currR] = circleCircleTangents(outerCenters(i - 1, :), r, innerCenters(i, :), r);
             elseif turns(i - 1) == 1 && turns(i) == 1
-                % Right turn then right turn (TEST)
-                [currR, ~, ~, ~] = circleCircleTangents(centers(i - 1, :), r, centers(i, :), r);
-                [currL, ~, ~, ~] = circleCircleTangents(centers(i - 1, :), outerRadii(i - 1, :), centers(i, :), outerRadii(i, :));
+                % Right turn then right turn
+                [currR, ~, ~, ~] = circleCircleTangents(innerCenters(i - 1, :), r, innerCenters(i, :), r);
+                [currL, ~, ~, ~] = circleCircleTangents(outerCenters(i - 1, :), r, outerCenters(i, :), r);
             else
-                % Left turn then left turn (TEST)
-                [~, currL, ~, ~] = circleCircleTangents(centers(i - 1, :), r, centers(i, :), r);
-                [~, currR, ~, ~] = circleCircleTangents(centers(i - 1, :), outerRadii(i - 1, :), centers(i, :), outerRadii(i, :));
+                % Left turn then left turn
+                [~, currL, ~, ~] = circleCircleTangents(innerCenters(i - 1, :), r, innerCenters(i, :), r);
+                [~, currR, ~, ~] = circleCircleTangents(outerCenters(i - 1, :), r, outerCenters(i, :), r);
             end
         end
         
@@ -159,6 +158,7 @@ function triangles = ConstTurnRadiusTriangulation(pL, pR, vMax, thetaDot)
         plot(leftTangents{i}(:, 1), leftTangents{i}(:, 2),'g','LineWidth', 4);
     end
     
+    %{
     % Get quadrilateral regions
     for i = 1:length(turns)
         

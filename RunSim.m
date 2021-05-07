@@ -3,7 +3,7 @@ addpath(genpath("src"))
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pathJsonFile = 'corridor.json';
+pathJsonFile = 'curvedPath.json';
 %triangulation = Triangulation.Closest;
 triangulation = Triangulation.ConstantTurnRadius;
 plotMap = 1;
