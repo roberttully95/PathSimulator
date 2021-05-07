@@ -5,7 +5,7 @@ addpath(genpath("src"))
 
 pathJsonFile = 'curvedPath.json';
 %triangulation = Triangulation.Closest;
-triangulation = Triangulation.ConstantTurnRadius;
+triangulation = Triangulation.ConstantVelocity;
 plotMap = 1;
 simSpeedup = 10;
 

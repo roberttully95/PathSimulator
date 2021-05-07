@@ -6,6 +6,6 @@ classdef Triangulation
     
     enumeration
         Closest
-        ConstantTurnRadius
+        ConstantVelocity
     end
 end
