@@ -5,7 +5,7 @@ addpath(genpath("src"))
 
 pathJsonFile = 'corridor.json';
 plotMap = 1;
-simSpeedup = 1000;
+simSpeedup = 10;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

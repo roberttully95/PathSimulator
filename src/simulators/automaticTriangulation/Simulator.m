@@ -107,13 +107,13 @@ classdef Simulator < handle
             this.t = 0;
             this.speedup = 1;
             
+            % Initialize plot
             this.initPlot();
             
             % Define the triangulation
             this.triangulate();
             
-            % Plot region
-            this.initPlot();
+            % Plot triangulation
             this.plotTriangles();
             
             % Initialize Vehicles
@@ -121,6 +121,9 @@ classdef Simulator < handle
             
             % Start first vehicle
             this.placeVehicle(1);
+            
+            this.vehicles(1).x = 29;
+            this.vehicles(1).y = 0;
         end
         
         function triangulate(this)
@@ -133,7 +136,7 @@ classdef Simulator < handle
                 case Triangulation.ConstantVelocity
                     this.triangles = ConstVelocityTriangulation(this.path1, this.path2, this.velocity, this.omegaMax);
                 case Triangulation.ConstantTurnRadius
-                    this.triangles = ConstTurnRadiusTriangulation(this.path1, this.path2, this.velocity, this.omegaMax);
+                    this.triangles = ConstTurnRadiusTriangulation(this.path1, this.path2, this.velocity / this.omegaMax);
             end
         end
         

@@ -31,10 +31,13 @@ end
 % ANALYZE %
 %%%%%%%%%%%
 
-% Get the percentage of vehicles that made it to the end
+% Count the number of each type of collision
+numV2Vcollisions = sum(vehicleData.END_CONDITION == 1);
+numV2Wallcollisions = sum(vehicleData.END_CONDITION == 2);
 numSuccess = sum(vehicleData.END_CONDITION == 0);
-successRate = numSuccess / height(vehicleData);
-fprintf("Success Rate: %.2f %%\n", successRate * 100);
+fprintf("%.0f vehicle-to-vehicle collisions involving %.0f cars\n", numV2Vcollisions / 2, numV2Vcollisions);
+fprintf("%.0f vehicle-to-map collisions\n", numV2Wallcollisions);
+fprintf("%.0f vehicle exited the map safely for a success rate of %0.2f%%\n", numSuccess, 100 * numSuccess / height(vehicleData));
 
 % Plot the times taken
 subplot(3, 1, 1)

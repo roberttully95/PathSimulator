@@ -185,7 +185,7 @@ function triangles = ConstVelocityTriangulation(pL, pR, vMax, thetaDot)
         % Get turn direction
         current = turns(i);
         opposite = (current == 1) * 2 + (current == 2) * 1; 
-         
+        
         % Get the coordinates of the start and end of the turn vertices for
         % the turn
         rEnd = rightTangents{i}(2, :);

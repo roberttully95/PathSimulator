@@ -1,4 +1,4 @@
-function regions = ConstTurnRadiusTriangulation(pL, pR, vMax, thetaDot)
+function regions = ConstTurnRadiusTriangulation(pL, pR, r)
 %CONSTTURNRADIUSTRIANGULATION 
 %
 % ASSUMPTIONS: 
@@ -9,12 +9,9 @@ function regions = ConstTurnRadiusTriangulation(pL, pR, vMax, thetaDot)
 
     % Combine [Right, Left]
     P = [pR, pL];
-
+    
     % Length
     n = length(pL.x);
-
-    % Turn Radius
-    r = vMax / thetaDot;
     
     % Assumption 1: Same number of vertices for left and right path
     if length(pR.x) ~= n
@@ -92,10 +89,10 @@ function regions = ConstTurnRadiusTriangulation(pL, pR, vMax, thetaDot)
     end
     
     % Plot inner and outer circles
-    for i = 1:size(innerCenters, 1)
-        viscircles(innerCenters(i, :), r, 'Color', 'r');
-        viscircles(outerCenters(i, :), r, 'Color', 'g');
-    end
+    %for i = 1:size(innerCenters, 1)
+    %    viscircles(innerCenters(i, :), r, 'Color', 'r');
+    %    viscircles(outerCenters(i, :), r, 'Color', 'g');
+    %end
     
     %%%%%%%%%%%%%%%%
     % GET TANGENTS %
@@ -153,11 +150,11 @@ function regions = ConstTurnRadiusTriangulation(pL, pR, vMax, thetaDot)
     end
     
     % Plot tangents
-    for i = 1:length(rightTangents)
-        plot(rightTangents{i}(:, 1), rightTangents{i}(:, 2),'r','LineWidth', 4);
-        plot(leftTangents{i}(:, 1), leftTangents{i}(:, 2),'g','LineWidth', 4);
-    end
-
+    %for i = 1:length(rightTangents)
+    %    plot(rightTangents{i}(:, 1), rightTangents{i}(:, 2),'r','LineWidth', 4);
+    %    plot(leftTangents{i}(:, 1), leftTangents{i}(:, 2),'g','LineWidth', 4);
+    %end
+    
     %%%%%%%%%%%%%%%%%%%%%%%%
     % GET STRAIGHT REGIONS %
     %%%%%%%%%%%%%%%%%%%%%%%%
@@ -172,12 +169,12 @@ function regions = ConstTurnRadiusTriangulation(pL, pR, vMax, thetaDot)
         outsideEnd = leftTangents{i}(2, :);
 
         % Initialize regions with coordinates
-        straightRegions(2*i - 1) = Region([outsideStart; insideStart; outsideEnd], 'g');
-        straightRegions(2*i) = Region([insideStart; outsideEnd; insideEnd], 'g');
+        straightRegions(2*i - 1) = Region([outsideStart; insideStart; insideEnd], 'g');
+        straightRegions(2*i) = Region([outsideStart; outsideEnd; insideEnd], 'g');
         
         % Get the heading directions
-        dir1 = vecNorm(outsideEnd - outsideStart);
-        dir2 = vecNorm(insideEnd - insideStart);
+        dir1 = vecNorm(insideEnd - insideStart);
+        dir2 = vecNorm(outsideEnd - outsideStart);
         
         % Set the commanded heading
         straightRegions(2*i - 1).thetaCmd = atan2(dir1(2), dir1(1));
@@ -246,9 +243,4 @@ function regions = ConstTurnRadiusTriangulation(pL, pR, vMax, thetaDot)
     end
     regions(1).prevIndex = 0;
     regions(end).nextIndex = NaN;
-    
-    % Plot regions
-    for i = 1:length(regions)
-        regions(i).plot(gca, 'r');
-    end
 end
