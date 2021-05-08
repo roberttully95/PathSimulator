@@ -1,4 +1,4 @@
-function triangles = ConstTurnRadiusTriangulation(pL, pR, vMax, thetaDot)
+function regions = ConstTurnRadiusTriangulation(pL, pR, vMax, thetaDot)
 %CONSTTURNRADIUSTRIANGULATION 
 %
 % ASSUMPTIONS: 
@@ -161,7 +161,7 @@ function triangles = ConstTurnRadiusTriangulation(pL, pR, vMax, thetaDot)
     %%%%%%%%%%%%%%%%%%%%%%%%
     % GET STRAIGHT REGIONS %
     %%%%%%%%%%%%%%%%%%%%%%%%
-    straightRegions = Triangle.empty(2 * length(rightTangents), 0);
+    straightRegions = Region.empty(2 * length(rightTangents), 0);
     for i = 1:length(rightTangents)
         % Create two separate triangles for each straight region. 
         %   1: 'insideStart -> insideEnd -> outsideEnd'
@@ -171,15 +171,24 @@ function triangles = ConstTurnRadiusTriangulation(pL, pR, vMax, thetaDot)
         outsideStart = leftTangents{i}(1, :);
         outsideEnd = leftTangents{i}(2, :);
 
-        % Get coordinates of the region and the heading of the region
-        straightRegions(2*i - 1) = Triangle(outsideStart, insideStart, outsideEnd, 'Vertices');
-        straightRegions(2*i) = Triangle(insideStart, outsideEnd, insideEnd, 'Vertices');
+        % Initialize regions with coordinates
+        straightRegions(2*i - 1) = Region([outsideStart; insideStart; outsideEnd], 'g');
+        straightRegions(2*i) = Region([insideStart; outsideEnd; insideEnd], 'g');
+        
+        % Get the heading directions
+        dir1 = vecNorm(outsideEnd - outsideStart);
+        dir2 = vecNorm(insideEnd - insideStart);
+        
+        % Set the commanded heading
+        straightRegions(2*i - 1).thetaCmd = atan2(dir1(2), dir1(1));
+        straightRegions(2*i).thetaCmd = atan2(dir2(2), dir2(1));
     end
+    
     
     %%%%%%%%%%%%%%%%%%%%
     % GET TURN REGIONS %
     %%%%%%%%%%%%%%%%%%%%
-    turnRegions = Triangle.empty(3 * length(turns), 0);
+    turnRegions = Region.empty(3 * length(turns), 0);
     for i = 1:length(turns)
         
         % Get turn direction
@@ -202,39 +211,44 @@ function triangles = ConstTurnRadiusTriangulation(pL, pR, vMax, thetaDot)
         end
         
         % Make triangles
-        turnRegions(3*i - 2) = Triangle(outsideStart, insideStart, P(opposite).coords(i + 1, :), 'Vertices');
-        turnRegions(3*i - 1) = Triangle(insideStart, P(opposite).coords(i + 1, :), insideEnd, 'Vertices');
-        turnRegions(3*i) = Triangle(P(opposite).coords(i + 1, :), insideEnd, outsideEnd, 'Vertices');
+        turnRegions(3*i - 2) = Region([outsideStart; insideStart; P(opposite).coords(i + 1, :)], 'r');
+        turnRegions(3*i - 1) = Region([insideStart; P(opposite).coords(i + 1, :); insideEnd], 'r');
+        turnRegions(3*i) = Region([P(opposite).coords(i + 1, :); insideEnd; outsideEnd], 'r');
+        
+        % Set the commanded heading
+        turnRegions(3*i - 2).thetaCmd = straightRegions(2*i + 1).thetaCmd;
+        turnRegions(3*i - 1).thetaCmd = straightRegions(2*i + 1).thetaCmd;
+        turnRegions(3*i).thetaCmd = straightRegions(2*i + 1).thetaCmd;
     end
     
     %%%%%%%%%%%%%%%%%%%%%%%%
     % CREATE TRIANGULATION %
     %%%%%%%%%%%%%%%%%%%%%%%%
-    triangles = Triangle.empty(length(straightRegions) + length(turnRegions), 0);
+    regions = Region.empty(length(straightRegions) + length(turnRegions), 0);
     for i = 1:length(rightTangents)
         j = 5*(i - 1);
         
         % For the first sequence, we don't have a turn
         if i ~= 1
             % Create objects
-            triangles(j - 2) = turnRegions(3*(i -1) - 2);
-            triangles(j - 1) = turnRegions(3*(i -1) - 1);
-            triangles(j) = turnRegions(3*(i -1));
+            regions(j - 2) = turnRegions(3*(i -1) - 2);
+            regions(j - 1) = turnRegions(3*(i -1) - 1);
+            regions(j) = turnRegions(3*(i -1));
         end
         
         % For each sequence, we have turn followed by straight
-        triangles(j + 1) = straightRegions(2*i - 1);
-        triangles(j + 2) = straightRegions(2*i);
+        regions(j + 1) = straightRegions(2*i - 1);
+        regions(j + 2) = straightRegions(2*i);
     end
-    for i = 1:length(triangles)
-        triangles(i).prevIndex = i - 1;
-        triangles(i).nextIndex = i + 1;
+    for i = 1:size(regions, 2)
+        regions(i).prevIndex = i - 1;
+        regions(i).nextIndex = i + 1;
     end
-    triangles(1).prevIndex = 0;
-    triangles(end).nextIndex = NaN;
+    regions(1).prevIndex = 0;
+    regions(end).nextIndex = NaN;
     
     % Plot regions
-    %for i = 1:length(triangles)
-    %    triangles(i).plot(gca, 'r');
-    %end
+    for i = 1:length(regions)
+        regions(i).plot(gca, 'r');
+    end
 end

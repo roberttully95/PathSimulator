@@ -6,7 +6,7 @@ tMax = 40;
 Kp = Inf;
 Ki = 0;
 Kd = 0;
-thDotMax = pi/4;
+thDotMax = pi/2;
 %%%%%%%%%%%%%%%%%%%%%
 hold on;
 

@@ -3,9 +3,17 @@ classdef Region < handle
     %   Detailed explanation goes here
     
     properties
-        coords % vertex coordinates
-         theta  % commanded heading for the region
-         vel    % commanded velocity for the region
+        coords      % vertex coordinates
+        thetaCmd    % commanded theta
+        velCmd      % commanded velocity
+        thetaDotCmd % commanded turn rate
+        
+        prevIndex   % set previous index
+        nextIndex   % set next index
+    end
+    
+    properties (Access = private)
+        color       % the color that the region will be plotted
     end
     
     properties (Dependent)
@@ -14,12 +22,21 @@ classdef Region < handle
     end
     
     methods
-        function this = Region(coords, theta, vel)
+        function this = Region(coords, color)
             %REGION Construct an instance of this class
             %   Detailed explanation goes here
             this.coords = coords;
-             this.theta = theta;
-             this.vel = vel;
+            
+            % Init all to NaN
+            this.thetaCmd = NaN;
+            this.velCmd = NaN;
+            this.thetaDotCmd = NaN;
+            
+            % Init indices
+            this.prevIndex = 0;
+            this.nextIndex = NaN;
+            
+            this.color = color;
         end
         
         function plot(this, ax, color)
@@ -32,13 +49,20 @@ classdef Region < handle
             hold(ax, 'on');
                
             % Patch shape
-            patch(this.x, this.y, color, 'FaceAlpha', 0.2);
+            patch(this.x, this.y, color, 'FaceColor', this.color, 'FaceAlpha', 0.2);
             
+            % Plot arrow
             l = norm(this.coords(1, :) - [mean(this.x), mean(this.y)]) / 2;
-            arrows(ax, mean(this.x), mean(this.y), l, 90 - rad2deg(this.theta));
+            arrows(ax, mean(this.x), mean(this.y), l, 90 - rad2deg(this.thetaCmd));
             
             % Hold off
             hold(ax, 'off');
+        end
+        
+        function val = containsPt(this, pt)
+            %CONTAINSPT Determines if a triangle contains a provided point.
+            
+            val = inpolygon(pt(1), pt(2), this.x, this.y);
         end
     end
     

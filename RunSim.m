@@ -4,14 +4,13 @@ addpath(genpath("src"))
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 pathJsonFile = 'corridor.json';
-%triangulation = Triangulation.Closest;
-triangulation = Triangulation.ConstantTurnRadius;
 plotMap = 1;
-simSpeedup = 10000;
+simSpeedup = 1000;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pathsim = Simulator(pathJsonFile, triangulation, plotMap);
+% Run simulation with two at a time
+pathsim = Simulator(pathJsonFile, Triangulation.ConstantTurnRadius, plotMap);
 pathsim.speedup = simSpeedup;
 while ~pathsim.finished
     pathsim.propogate();

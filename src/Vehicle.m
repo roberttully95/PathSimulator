@@ -9,6 +9,7 @@ classdef Vehicle < handle
         tInit           % The time at which the vehicle enters the 'map'
         tEnd            % The time at which the vehicle exits the 'map'
         r               % The radius of the vehicle
+        w               % The turn rate of the vehicle
         wMax            % The max turn rate of the vehicle
         finished        % Flag that determines if the vehicle has exited the 'map'.
         triangleIndex   % The index of the triangle within the triangles array that the vehicle is currently in.
@@ -27,7 +28,7 @@ classdef Vehicle < handle
     
     methods
         
-        function this = Vehicle(x0, y0, th0, v0, t0, r, wMax, controller)
+        function this = Vehicle(x0, y0, th0, v0, t0, r, wMax)
             % VEHICLE2D Constructor taking initial conditions
             this.setInitialConditions(x0, y0, th0, v0, t0);
             this.tEnd = Inf;
@@ -35,7 +36,6 @@ classdef Vehicle < handle
             this.active = (t0 == 0);
             this.r = r;
             this.wMax = wMax;
-            this.controller = controller;
             this.distTravelled = 0;
         end
         
@@ -47,6 +47,7 @@ classdef Vehicle < handle
             this.y = y0;
             this.th = th0;
             this.v = v0;
+            this.w = 0;
             this.tInit = t0;
             this.finished = false;
         end
@@ -60,11 +61,12 @@ classdef Vehicle < handle
             yStore = this.y;
             
             % Determine the actual heading using the controller
-            this.th = this.th + this.controller.calculate(thDesired, this.th);
+            this.w = BangBangTurnRateController(thDesired, this.th, this.wMax);
             
             % Update position and 
             this.x = this.x + this.v * cos(this.th) * dT;
             this.y = this.y + this.v * sin(this.th) * dT;
+            this.th = wrapToPi(this.th + this.w * dT);
             
             % Update distance travelled
             this.distTravelled = this.distTravelled + norm([xStore, yStore] - [this.x, this.y]);

@@ -1,4 +1,4 @@
-function triangles = closestTriangulation(p1, p2)
+function regions = closestTriangulation(p1, p2)
     %CLOSESTTRIANGULATION Generates a triangulation by using the closest
     %available unvisited vertex at each time step.
     
@@ -7,7 +7,7 @@ function triangles = closestTriangulation(p1, p2)
     n = p2.length;
     
     % Init triangles
-    triangles = Triangle.empty(max(m, n) + 1, 0);
+    regions = Region.empty(max(m, n) + 1, 0);
     
     % Initialize
     i = 1;
@@ -29,14 +29,16 @@ function triangles = closestTriangulation(p1, p2)
 
         % If one path is finished, we need to do the other.
         if i == m
-            triangles(index) = Triangle(v2a, v1a, v2b, 'Vertices');
-            triangles(index).prevIndex = index - 1;
+            regions(index) = Region([v2a; v1a; v2b], 'r');
+            regions(index).thetaCmd = vecHeading(vecNorm(v2b - v2a));
+            regions(index).prevIndex = index - 1;
             j = j + 1;
             index = index + 1;
             continue;
         elseif j == n
-            triangles(index) = Triangle(v1a, v2a, v1b, 'Vertices');
-            triangles(index).prevIndex = index - 1;
+            regions(index) = Region([v1a; v2a; v1b], 'r');
+            regions(index).thetaCmd = vecHeading(vecNorm(v1b - v1a));
+            regions(index).prevIndex = index - 1;
             i = i + 1;
             index = index + 1;
             continue;
@@ -44,16 +46,18 @@ function triangles = closestTriangulation(p1, p2)
 
         % Create edge
         if d1 <= d2
-            triangles(index) = Triangle(v2a, v1a, v2b, 'Vertices');
-            triangles(index).prevIndex = index - 1;
-            triangles(index).nextIndex = index + 1;
+            regions(index) = Region([v2a; v1a; v2b], 'r');
+            regions(index).thetaCmd = vecHeading(vecNorm(v2b - v2a));
+            regions(index).prevIndex = index - 1;
+            regions(index).nextIndex = index + 1;
             j = j + 1;
             index = index + 1;
             continue;
         else
-            triangles(index) = Triangle(v1a, v2a, v1b, 'Vertices');
-            triangles(index).prevIndex = index - 1;
-            triangles(index).nextIndex = index + 1;
+            regions(index) = Region([v1a; v2a; v1b], 'r');
+            regions(index).thetaCmd = vecHeading(vecNorm(v1b - v1a));
+            regions(index).prevIndex = index - 1;
+            regions(index).nextIndex = index + 1;
             i = i + 1;
             index = index + 1;
             continue;

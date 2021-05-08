@@ -142,9 +142,6 @@ classdef Simulator < handle
             %initialize the heading of the vehicles, however. The initialized heading is determined
             %by the triangulation method in the derived method.
             
-            % Get the controller
-            controller = HeadingController(this.dT, this.Kp, this.Ki, this.Kd, this.omegaMax);
-            
             % Create array of spawn times
             t0 = 0:(1/this.fSpawn):this.tEnd;
             
@@ -154,7 +151,7 @@ classdef Simulator < handle
             % Create vehicles array.
             this.vehicles = Vehicle.empty(0, n);
             for i = 1:n
-                this.vehicles(i) = Vehicle(NaN, NaN, NaN, this.velocity, t0(i), this.vehicleRadius, this.omegaMax, controller);
+                this.vehicles(i) = Vehicle(NaN, NaN, NaN, this.velocity, t0(i), this.vehicleRadius, this.omegaMax);
             end
         end
         
@@ -203,7 +200,7 @@ classdef Simulator < handle
                 p = polyshape(this.triangles(j).x, this.triangles(j).y);
                 if isinterior(p, pt(1), pt(2))
                     this.vehicles(i).triangleIndex = j;
-                    this.vehicles(i).th = atan2(this.triangles(j).dir(2), this.triangles(j).dir(1));
+                    this.vehicles(i).th = this.triangles(j).thetaCmd;
                     break;
                 end
                 if j == this.nTriangles
@@ -264,15 +261,6 @@ classdef Simulator < handle
                     % Plot triangle
                     tri = this.triangles(i);
                     tri.plot(this.mapAxis, 'g');
-
-                    % Get centroid
-                    v = tri.centroid;
-
-                    % Get length 
-                    len = (1/6) * tri.dirLength;
-
-                    % Plot arrows
-                    arrows(this.mapAxis, v(1), v(2), len, 90 - atan2(tri.dir(2), tri.dir(1)) * (180 / pi))
                 end
             end
         end
@@ -286,13 +274,20 @@ classdef Simulator < handle
                 
                 % Get desired heading
                 triangle = this.triangles(this.vehicles(i).triangleIndex);
-                thDesired = atan2(triangle.dir(2), triangle.dir(1));
+                thDesired = triangle.thetaCmd;
+                
+                if i == 4
+                    disp('');
+                end
                 
                 % Propogate vehicle
                 this.vehicles(i).propogate(this.dT, thDesired);
-                
+                    
                 % Update triangle
                 if ~triangle.containsPt(this.vehicles(i).pos)
+                    if i == 4
+                        disp('');
+                    end
                     this.vehicles(i).triangleIndex = triangle.nextIndex;
                 end
             end
@@ -332,7 +327,6 @@ classdef Simulator < handle
                 
                 % Plot the circle
                 this.handle = viscircles([x', y'], r');
-                
             end
         end
         
@@ -376,13 +370,14 @@ classdef Simulator < handle
                 this.terminateVehicle(active(iEnded(i)), 0);
             end
             
+            %TODO: Get boundary around triangles
             % Step 2: Terminate vehicles that collided with the wall.
             active = this.activeVehicles;
             positions  = reshape([this.vehicles(active).pos], 2, this.nActiveVehicles)';
             for i = 1:size(positions, 1)
-                dirEdge = [this.triangles(this.vehicles(active(i)).triangleIndex).directionEdge];
-                [d, ~] = distToLineSegment(dirEdge, positions(i, :));
-                if d < this.vehicles(active(i)).r
+                d1 = distToPolyline(this.path1.coords, positions(i, :));
+                d2 = distToPolyline(this.path2.coords, positions(i, :));
+                if d1 < this.vehicles(active(i)).r || d2 < this.vehicles(active(i)).r
                     this.terminateVehicle(active(i), 2);
                 end
             end

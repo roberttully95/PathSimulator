@@ -3,11 +3,11 @@
   "properties": 
   {
     "nVehicles": 25,
-    "deltaT": 0.1,
-    "velocity": 10,
+    "deltaT": 0.01,
+    "velocity": 5,
     "spawnFreq": 1,
     "vehicleRadius": 1,
-    "omegaMax": 1.57,
+    "omegaMax": 0.78,
     "Kp": Inf,
     "Ki": 0,
     "Kd": 0,
@@ -37,8 +37,8 @@
                 135
               ],
               [
-                165,
-                150
+                160,
+                155
               ],
               [
                 180,
