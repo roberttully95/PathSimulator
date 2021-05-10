@@ -6,6 +6,7 @@ function regions = ConstTurnRadiusTriangulation(pL, pR, r)
 %   2: If turn on left path is 'left', the corresponding turn on right path
 %      is also 'left'
 %
+    DEBUG = 0;
 
     % Combine [Right, Left]
     P = [pR, pL];
@@ -89,10 +90,12 @@ function regions = ConstTurnRadiusTriangulation(pL, pR, r)
     end
     
     % Plot inner and outer circles
-    %for i = 1:size(innerCenters, 1)
-    %    viscircles(innerCenters(i, :), r, 'Color', 'r');
-    %    viscircles(outerCenters(i, :), r, 'Color', 'g');
-    %end
+    if DEBUG
+        for i = 1:size(innerCenters, 1)
+            viscircles(innerCenters(i, :), r, 'Color', 'r');
+            viscircles(outerCenters(i, :), r, 'Color', 'g');
+        end
+    end
     
     %%%%%%%%%%%%%%%%
     % GET TANGENTS %
@@ -148,44 +151,86 @@ function regions = ConstTurnRadiusTriangulation(pL, pR, r)
         rightTangents{i} = currR;
         leftTangents{i} = currL;
     end
-    
+
     % Plot tangents
-    %for i = 1:length(rightTangents)
-    %    plot(rightTangents{i}(:, 1), rightTangents{i}(:, 2),'r','LineWidth', 4);
-    %    plot(leftTangents{i}(:, 1), leftTangents{i}(:, 2),'g','LineWidth', 4);
-    %end
+    if DEBUG
+        for i = 1:length(rightTangents)
+            plot(rightTangents{i}(:, 1), rightTangents{i}(:, 2),'r','LineWidth', 2);
+            plot(leftTangents{i}(:, 1), leftTangents{i}(:, 2),'g','LineWidth', 2);
+        end
+    end
     
     %%%%%%%%%%%%%%%%%%%%%%%%
     % GET STRAIGHT REGIONS %
     %%%%%%%%%%%%%%%%%%%%%%%%
-    straightRegions = Region.empty(2 * length(rightTangents), 0);
+    m = length(turns);  % #turns
+    n = m + 1;          % #straights
+    regionsCell = cell(3*(m + n) - 1, 1);
     for i = 1:length(rightTangents)
-        % Create two separate triangles for each straight region. 
-        %   1: 'insideStart -> insideEnd -> outsideEnd'
-        %   2: 'insideStart -> outsideStart -> outsideEnd'
-        insideStart = rightTangents{i}(1, :);
-        insideEnd = rightTangents{i}(2, :);
-        outsideStart = leftTangents{i}(1, :);
-        outsideEnd = leftTangents{i}(2, :);
-
-        % Initialize regions with coordinates
-        straightRegions(2*i - 1) = Region([outsideStart; insideStart; insideEnd], 'g');
-        straightRegions(2*i) = Region([outsideStart; outsideEnd; insideEnd], 'g');
+        if i == length(rightTangents)
+            j = i - 1;
+        else
+            j = i;
+        end
         
-        % Get the heading directions
-        dir1 = vecNorm(insideEnd - insideStart);
-        dir2 = vecNorm(outsideEnd - outsideStart);
+        % Get inner and outer centers
+        cI = innerCenters(j, :);
+        cO = outerCenters(j, :);
         
-        % Set the commanded heading
-        straightRegions(2*i - 1).thetaCmd = atan2(dir1(2), dir1(1));
-        straightRegions(2*i).thetaCmd = atan2(dir2(2), dir2(1));
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % GET THE STRAIGHT REGION %
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%
+        if turns(j) == 1
+            % right turn
+            insideStart = rightTangents{i}(1, :);
+            insideEnd = rightTangents{i}(2, :);
+            outsideStart = leftTangents{i}(1, :);
+            outsideEnd = leftTangents{i}(2, :);
+        else
+            % left turn
+            insideStart = leftTangents{i}(1, :);
+            insideEnd = leftTangents{i}(2, :);
+            outsideStart = rightTangents{i}(1, :);
+            outsideEnd = rightTangents{i}(2, :);
+        end
+        
+        % Initialize straight regions
+        regionsCell{6*i - 5} = Region([outsideStart; insideStart; insideEnd], 'g');
+        regionsCell{6*i - 5}.thetaCmd = vecHeading(vecNorm(insideEnd - insideStart));
+        regionsCell{6*i - 4} = Region([outsideStart; outsideEnd; insideEnd], 'g');
+        regionsCell{6*i - 4}.thetaCmd = vecHeading(vecNorm(outsideEnd - outsideStart));
+        if DEBUG
+            regionsCell{6*i - 5}.plot(gca);
+            regionsCell{6*i - 4}.plot(gca);
+        end
+        
+        % End here if the last two straight
+        if i == length(rightTangents)
+            break;
+        end
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % GET THE TRANSITION TRIANGLE %
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        outsideIntOnInner = outsideEnd + (cI - cO);
+        insideIntOnOuter = insideEnd + (cO - cI);
+        if orientation(cI, insideEnd, outsideIntOnInner) == turns(i)
+            % outer last
+            regionsCell{6*i - 3} = Region([insideEnd; outsideEnd; outsideIntOnInner], 'b');
+            regionsCell{6*i - 3}.thetaCmd = regionsCell{6*i - 4}.thetaCmd;
+        else
+            % inner last
+            regionsCell{6*i - 3} = Region([outsideEnd; insideIntOnOuter; insideEnd], 'b');
+            regionsCell{6*i - 3}.thetaCmd = regionsCell{6*i - 5}.thetaCmd;
+        end
+        if DEBUG
+            regionsCell{6*i - 3}.plot(gca);
+        end
     end
-    
     
     %%%%%%%%%%%%%%%%%%%%
     % GET TURN REGIONS %
     %%%%%%%%%%%%%%%%%%%%
-    turnRegions = Region.empty(3 * length(turns), 0);
     for i = 1:length(turns)
         
         % Get turn direction
@@ -195,49 +240,38 @@ function regions = ConstTurnRadiusTriangulation(pL, pR, r)
         % Get the vertices
         if turns(i) == 1
             % Right turn
-            insideStart = rightTangents{i}(2, :);
             insideEnd = rightTangents{i + 1}(1, :);
-            outsideStart = leftTangents{i}(2, :);
             outsideEnd = leftTangents{i + 1}(1, :);
         else
             % Left turn
-            outsideStart = rightTangents{i}(2, :);
             outsideEnd = rightTangents{i + 1}(1, :);
-            insideStart = leftTangents{i}(2, :);
             insideEnd = leftTangents{i + 1}(1, :);
         end
         
+        % Get the previous transition region
+        transitionCoords = regionsCell{6*i - 3}.coords(2:3, :);
+        outsideStart = transitionCoords(1, :);
+        insideStart = transitionCoords(2, :);
+
         % Make triangles
-        turnRegions(3*i - 2) = Region([outsideStart; insideStart; P(opposite).coords(i + 1, :)], 'r');
-        turnRegions(3*i - 1) = Region([insideStart; P(opposite).coords(i + 1, :); insideEnd], 'r');
-        turnRegions(3*i) = Region([P(opposite).coords(i + 1, :); insideEnd; outsideEnd], 'r');
+        regionsCell{6*i - 2} = Region([outsideStart; insideStart; P(opposite).coords(i + 1, :)], 'r');
+        regionsCell{6*i - 2}.thetaCmd = regionsCell{6*i + 1}.thetaCmd;
+        regionsCell{6*i - 1} = Region([insideStart; P(opposite).coords(i + 1, :); insideEnd], 'r');
+        regionsCell{6*i - 1}.thetaCmd = regionsCell{6*i + 1}.thetaCmd;
+        regionsCell{6*i - 0} = Region([P(opposite).coords(i + 1, :); insideEnd; outsideEnd], 'r');
+        regionsCell{6*i - 0}.thetaCmd = regionsCell{6*i + 1}.thetaCmd;
         
-        % Set the commanded heading
-        turnRegions(3*i - 2).thetaCmd = straightRegions(2*i + 1).thetaCmd;
-        turnRegions(3*i - 1).thetaCmd = straightRegions(2*i + 1).thetaCmd;
-        turnRegions(3*i).thetaCmd = straightRegions(2*i + 1).thetaCmd;
+        if DEBUG
+            regionsCell{6*i - 2}.plot(gca);
+            regionsCell{6*i - 1}.plot(gca);
+            regionsCell{6*i - 0}.plot(gca);
+        end
     end
     
-    %%%%%%%%%%%%%%%%%%%%%%%%
-    % CREATE TRIANGULATION %
-    %%%%%%%%%%%%%%%%%%%%%%%%
-    regions = Region.empty(length(straightRegions) + length(turnRegions), 0);
-    for i = 1:length(rightTangents)
-        j = 5*(i - 1);
-        
-        % For the first sequence, we don't have a turn
-        if i ~= 1
-            % Create objects
-            regions(j - 2) = turnRegions(3*(i -1) - 2);
-            regions(j - 1) = turnRegions(3*(i -1) - 1);
-            regions(j) = turnRegions(3*(i -1));
-        end
-        
-        % For each sequence, we have turn followed by straight
-        regions(j + 1) = straightRegions(2*i - 1);
-        regions(j + 2) = straightRegions(2*i);
-    end
-    for i = 1:size(regions, 2)
+    % Set indices and change to array
+    regions = Region.empty(length(regionsCell), 0);
+    for i = 1:size(regionsCell, 1)
+        regions(i) = regionsCell{i};
         regions(i).prevIndex = i - 1;
         regions(i).nextIndex = i + 1;
     end

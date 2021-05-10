@@ -39,17 +39,14 @@ classdef Region < handle
             this.color = color;
         end
         
-        function plot(this, ax, color)
+        function plot(this, ax)
             %PLOT Plots the triangle.
-            if nargin == 2
-                color = 'r';
-            end
-                        
+   
             % Set hold on
             hold(ax, 'on');
                
             % Patch shape
-            patch(this.x, this.y, color, 'FaceColor', this.color, 'FaceAlpha', 0.2);
+            patch(this.x, this.y, this.color, 'FaceAlpha', 0.2);
             
             % Plot arrow
             l = norm(this.coords(1, :) - [mean(this.x), mean(this.y)]) / 2;

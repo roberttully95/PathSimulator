@@ -66,7 +66,13 @@ classdef Vehicle < handle
             % Update position and 
             this.x = this.x + this.v * cos(this.th) * dT;
             this.y = this.y + this.v * sin(this.th) * dT;
-            this.th = wrapToPi(this.th + this.w * dT);
+            
+            % Assume perfect controller
+            if abs(thDesired - this.th) < this.w * dT
+                this.th = thDesired;
+            else
+                this.th = wrapToPi(this.th + this.w * dT);
+            end
             
             % Update distance travelled
             this.distTravelled = this.distTravelled + norm([xStore, yStore] - [this.x, this.y]);
