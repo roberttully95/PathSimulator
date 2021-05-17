@@ -1,7 +1,6 @@
 # Ignore logs and images directory
 logs/
-images/
 
-# Ignore .asv and .ini files
+# Ignore certain file types
 *.asv
 *.ini
